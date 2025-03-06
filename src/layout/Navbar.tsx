@@ -305,7 +305,7 @@ export function Navbar() {
             <NavigationMenuLink
               className={cn(
                 navigationMenuTriggerStyle(),
-                "flex items-center gap-2 cursor-pointer"
+                "items-center gap-2 cursor-pointer hidden"
               )}
             >
               <LogOut className="size-4" />
