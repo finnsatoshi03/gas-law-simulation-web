@@ -13,6 +13,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Button } from "../ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MoleculeProps {
   x: number;
@@ -54,6 +55,8 @@ export const CylinderWithMole: React.FC<CylinderWithMoleProps> = ({
   moleculeCount = 0,
   selectedGases = ["oxygen"],
 }) => {
+  const isMobile = useIsMobile();
+
   const [molecules, setMolecules] = useState<MoleculeState[]>([]);
   const [opacity, setOpacity] = useState(1);
   const prevPumpOffsetRef = useRef(0);
@@ -409,7 +412,12 @@ export const CylinderWithMole: React.FC<CylinderWithMoleProps> = ({
       <Cylinder />
       <Tooltip>
         <TooltipTrigger asChild>
-          <foreignObject x="-120" y="800" width="120" height="50">
+          <foreignObject
+            x={isMobile ? "25" : "-120"}
+            y={isMobile ? "290" : "800"}
+            width="120"
+            height="50"
+          >
             <Button
               onClick={clearMolecules}
               className="bg-red-500 text-white px-2 py-1 rounded simulation-clear-molecules"

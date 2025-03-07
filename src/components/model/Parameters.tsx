@@ -9,6 +9,7 @@ import {
   GasLawInputProps,
   UnitTypes,
 } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { GAS_CONSTANTS } from "@/lib/constants";
 
 import { useGasLaw } from "@/contexts/GasLawProvider";
@@ -27,9 +28,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "../ui/button";
-import { cn } from "@/lib/utils";
 import CalculationHistoryDrawer from "../CalculationHistory";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const UNITS: UnitTypes = {
   pressure: {
@@ -230,6 +232,7 @@ const GasLawInput: React.FC<
   defaultValue,
   className,
 }) => {
+  const isMobile = useIsMobile();
   const availableUnits = UNITS[unitType];
 
   const getTooltipContent = () => {
@@ -266,7 +269,7 @@ const GasLawInput: React.FC<
             {label}
             {result?.target === id && (
               <span className="text-xs text-blue-500 text-muted-foreground">
-                (Calculated)
+                {isMobile ? "(Calc)" : "(Calculated)"}
               </span>
             )}
             {disabled && (
@@ -301,7 +304,7 @@ const GasLawInput: React.FC<
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="w-20 sm:w-28 input-unit-pressure-1-selector">
+            <div className="w-14 sm:w-28 input-unit-pressure-1-selector">
               <Select
                 value={selectedUnit}
                 onValueChange={(value) => onUnitChange(id, value)}
@@ -338,8 +341,10 @@ const GasLawInputGroup: React.FC<GasLawInputGroupProps> = ({
   onUnitChange,
   className,
 }) => {
+  const isMobile = useIsMobile();
   const [isMinimized, setIsMinimized] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isHorizontalLayout, setIsHorizontalLayout] = useState(false);
   const nodeRef = useRef(null);
 
   const { result, calculateResult, clearResult } = useGasLaw();
@@ -447,12 +452,12 @@ const GasLawInputGroup: React.FC<GasLawInputGroupProps> = ({
         GAS_CONSTANTS[pressureUnit as keyof typeof GAS_CONSTANTS];
 
       return (
-        <div className="grid gap-2 mt-6 pt-4 border-t">
-          <div className="font-medium text-sm">Constants</div>
-          <div className="space-y-2">
+        <div className="grid gap-2 mt-6 pt-4 border-t text-xs md:text-sm">
+          <div className="font-medium">Constants</div>
+          <div className="space-y-1 md:space-y-2">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Label className="text-sm font-normal flex items-center gap-2 cursor-help">
+                <Label className="font-normal text-xs md:text-sm flex items-center cursor-help">
                   - R = {constant.value} {constant.unit}
                 </Label>
               </TooltipTrigger>
@@ -468,20 +473,20 @@ const GasLawInputGroup: React.FC<GasLawInputGroupProps> = ({
     const config = GAS_LAW_CONFIGS[lawType];
     if (config.constants && config.constants.length > 0) {
       return (
-        <div className="grid gap-2 mt-6 pt-4 border-t">
-          <div className="font-medium text-sm">Constants</div>
+        <div className="grid gap-2 mt-6 pt-4 border-t text-xs md:text-sm">
+          <div className="font-medium">Constants</div>
           {config.constants.map((constant) => (
-            <div key={constant.id} className="space-y-2">
+            <div key={constant.id} className="md:space-y-2">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Label
                     htmlFor={constant.id}
-                    className="text-sm font-normal flex items-center gap-2 cursor-help"
+                    className="font-normal text-xs md:text-sm flex items-center gap-0 cursor-help"
                   >
                     - {constant.label}
                   </Label>
                 </TooltipTrigger>
-                <TooltipContent>
+                <TooltipContent className="text-xs md:text-sm">
                   {constant.unitType === "temperature"
                     ? "Temperature is held constant in this law"
                     : constant.unitType === "pressure"
@@ -506,10 +511,21 @@ const GasLawInputGroup: React.FC<GasLawInputGroupProps> = ({
     // If no groups are defined, render all variables
     if (!config.groups) {
       return (
-        <div className="grid gap-2 no-drag">
-          <div className="flex w-full justify-between items-center">
-            <div className="font-medium text-sm mb-2">Variables</div>
-            <CalculationHistoryDrawer lawType={lawType} />
+        <div
+          className={cn(
+            "grid gap-2 no-drag",
+            isHorizontalLayout && "grid-cols-2"
+          )}
+        >
+          <div
+            className={cn(
+              "flex w-full justify-between items-center",
+              isHorizontalLayout && "col-span-2"
+            )}
+          >
+            <div className="font-medium text-xs  md:text-sm mb-2">
+              Variables
+            </div>
           </div>
           {config.variables.map((variable) => (
             <div key={variable.id} className="space-y-2">
@@ -535,10 +551,19 @@ const GasLawInputGroup: React.FC<GasLawInputGroupProps> = ({
 
     // If groups are defined, render variables by groups
     return (
-      <div className="grid gap-2 no-drag note-initial-final-difference">
-        <div className="flex w-full justify-between items-center">
-          <div className="font-medium text-sm mb-2">Variables</div>
-          <CalculationHistoryDrawer lawType={lawType} />
+      <div
+        className={cn(
+          "grid gap-2 no-drag note-initial-final-difference",
+          isHorizontalLayout && "grid-cols-2"
+        )}
+      >
+        <div
+          className={cn(
+            "flex w-full justify-between items-center",
+            isHorizontalLayout && "col-span-2"
+          )}
+        >
+          <div className="font-medium text-xs md:text-sm mb-2">Variables</div>
         </div>
         {config.groups.map((group) => (
           <div
@@ -585,73 +610,98 @@ const GasLawInputGroup: React.FC<GasLawInputGroupProps> = ({
       <div
         ref={nodeRef}
         className={cn(
-          "space-y-4 p-2 sm:p-4 bg-sidebar rounded-lg border border-sidebar-border shadow-md w-full mx-auto",
+          "space-y-4 p-2 sm:p-4 bg-zinc-100 rounded-lg border border-sidebar-border shadow-md max-w-full mx-auto",
           className
         )}
         style={{
-          width: "320px",
-          maxWidth: "100%",
+          width: isHorizontalLayout
+            ? isMobile
+              ? "350px"
+              : "550px"
+            : isMobile
+            ? "250px"
+            : "320px",
         }}
       >
-        <div className="flex justify-between items-center gap-2 sm:gap-8">
-          <div className="flex items-center gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <GripVertical className="size-4 text-muted-foreground drag-handle cursor-grab active:cursor-grabbing" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Drag to move parameter</p>
-              </TooltipContent>
-            </Tooltip>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <GripVertical className="size-4 text-muted-foreground drag-handle cursor-grab active:cursor-grabbing" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Drag to move parameter</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={() => setIsMinimized(!isMinimized)}
+                    className="flex h-fit w-fit p-0 items-center gap-1 sm:gap-2 text-xs sm:text-sm"
+                  >
+                    {isMinimized ? (
+                      <ChevronDown className="size-3 sm:size-4" />
+                    ) : (
+                      <ChevronUp className="size-3 sm:size-4" />
+                    )}
+                    {isMinimized ? "Show Parameters" : "Minimize"}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {isMinimized
+                      ? "Expand parameter panel"
+                      : "Collapse parameter panel"}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <div className="flex items-center gap-1 no-drag">
+              <Switch
+                id="layout-mode"
+                checked={isHorizontalLayout}
+                onCheckedChange={setIsHorizontalLayout}
+                className="data-[state=checked]:bg-blue-500"
+              />
+              <Label
+                htmlFor="layout-mode"
+                className="text-xs sm:text-sm cursor-pointer"
+              >
+                {isHorizontalLayout ? "Horizontal" : "Vertical"}
+              </Label>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 justify-between">
+            <CalculationHistoryDrawer lawType={lawType} />
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="link"
                   size="sm"
-                  onClick={() => setIsMinimized(!isMinimized)}
-                  className="flex h-fit w-fit p-0 items-center gap-1 sm:gap-2 text-xs sm:text-sm"
+                  onClick={() => {
+                    Object.keys(values).forEach((key) => {
+                      if (!disabledFields.includes(key)) {
+                        onValueChange(
+                          key,
+                          lawType === "boyles" && key === "t" ? "275" : ""
+                        );
+                      }
+                    });
+                    clearResult();
+                  }}
+                  className="reset-button flex items-center gap-1 sm:gap-2 p-0 w-fit h-fit no-drag text-xs sm:text-sm"
                 >
-                  {isMinimized ? (
-                    <ChevronDown className="size-3 sm:size-4" />
-                  ) : (
-                    <ChevronUp className="size-3 sm:size-4" />
-                  )}
-                  {isMinimized ? "Show Parameters" : "Minimize"}
+                  <RefreshCw className="size-3" />
+                  Reset
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  {isMinimized
-                    ? "Expand parameter panel"
-                    : "Collapse parameter panel"}
-                </p>
-              </TooltipContent>
+              <TooltipContent>Reset all values to default</TooltipContent>
             </Tooltip>
           </div>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="link"
-                size="sm"
-                onClick={() => {
-                  Object.keys(values).forEach((key) => {
-                    if (!disabledFields.includes(key)) {
-                      onValueChange(
-                        key,
-                        lawType === "boyles" && key === "t" ? "275" : ""
-                      );
-                    }
-                  });
-                  clearResult();
-                }}
-                className="reset-button flex items-center gap-1 sm:gap-2 p-0 w-fit h-fit no-drag text-xs sm:text-sm"
-              >
-                <RefreshCw className="size-3" />
-                Reset
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Reset all values to default</TooltipContent>
-          </Tooltip>
         </div>
 
         {!isMinimized && (

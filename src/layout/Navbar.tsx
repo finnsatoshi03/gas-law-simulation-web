@@ -39,7 +39,7 @@ const navMain = [
         url: "/lussac",
       },
       {
-        title: "Avogadros' Law",
+        title: "Avogadro's Law",
         url: "/avogadros",
       },
       {

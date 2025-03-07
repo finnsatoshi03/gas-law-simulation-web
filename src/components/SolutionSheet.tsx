@@ -193,7 +193,7 @@ export const SolutionSheet: React.FC<SolutionSheetProps> = ({
         displayMode: true,
       });
     } catch (error) {
-      return `Error rendering equation: ${equation}`;
+      return `Error rendering equation: ${equation} ${error}`;
     }
   };
 

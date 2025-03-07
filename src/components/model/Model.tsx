@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Define types for type safety
 type GasLaw =
@@ -78,6 +79,7 @@ const GasLawsSimulation: React.FC<Props> = ({
   className,
 }) => {
   const { settings } = useSimulationSettings();
+  const isMobile = useIsMobile();
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isUserControlling, setIsUserControlling] = useState(false);
@@ -636,7 +638,11 @@ const GasLawsSimulation: React.FC<Props> = ({
         className
       )}
     >
-      <svg viewBox="0 0 783.9 890.8" className="w-full h-full">
+      <svg
+        viewBox="0 0 783.9 890.8"
+        className="w-full h-full"
+        transform={isMobile ? "translate(0, -100)" : undefined}
+      >
         <defs>
           <LinearGradients />
           <linearGradient
@@ -799,7 +805,12 @@ const GasLawsSimulation: React.FC<Props> = ({
         >
           <Tooltip>
             <TooltipTrigger asChild>
-              <foreignObject x="-32" y="760" width="50" height="50">
+              <foreignObject
+                x={isMobile ? "25" : "-32"}
+                y={isMobile ? "250" : "760"}
+                width="50"
+                height="50"
+              >
                 <Button
                   onClick={togglePlayPause}
                   className={`simulation-play-pause ${

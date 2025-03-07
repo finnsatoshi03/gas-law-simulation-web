@@ -153,15 +153,17 @@ export const Oxygen = () => {
           d="m564.4,610.2h0c-1.4,0-2.5-1.1-2.5-2.5v-15.2c0-1.4,1.1-2.5,2.5-2.5h0c1.4,0,2.5,1.1,2.5,2.5v15.2c0,1.4-1.1,2.5-2.5,2.5Z"
         />
         <rect className="cls-3" x="567.4" y="597.6" width="13.6" height="5.1" />
-        <text className="cls-31" transform="translate(580.68 715.41)">
-          <tspan x="0" y="0">
-            2
-          </tspan>
+        <text
+          className="st22 st6 st23"
+          transform="matrix(1 0 0 1 602.5764 681.4803)"
+        >
+          2
         </text>
-        <text className="cls-31" transform="translate(576.9 685.47)">
-          <tspan x="0" y="0">
-            O
-          </tspan>
+        <text
+          className="st22 st6 st24"
+          transform="matrix(0.9999 1.055186e-02 -1.055186e-02 0.9999 575.1836 703.4986)"
+        >
+          O
         </text>
       </g>
     </>
@@ -187,20 +189,23 @@ export const CarbonDioxide = () => {
         />
         <rect className="cls-2" x="670.4" y="593" width="15.7" height="9.3" />
         <line className="cls-10" x1="665.1" y1="593" x2="691.6" y2="593" />
-        <text className="cls-30" transform="translate(668.22 736.25)">
-          <tspan x="0" y="0">
-            2
-          </tspan>
+        <text
+          transform="matrix(1 0 0 1 697.1379 707.8611)"
+          className="st5 st6 st14"
+        >
+          2
         </text>
-        <text className="cls-30" transform="translate(663.29 706.69)">
-          <tspan x="0" y="0">
-            O
-          </tspan>
+        <text
+          transform="matrix(1 0 0 1 673.5854 701.1696)"
+          className="st5 st6 st15"
+        >
+          O
         </text>
-        <text className="cls-30" transform="translate(664.81 678.27)">
-          <tspan x="0" y="0">
-            C
-          </tspan>
+        <text
+          transform="matrix(1 0 0 1 652.1508 701.1705)"
+          className="st5 st6 st15"
+        >
+          C
         </text>
       </g>
     </>
@@ -235,15 +240,17 @@ export const Nitrogen = () => {
           className="cls-11"
           d="m763.1,548.7h17.2s-2-4.1-7.4-4.1-7.8.8-9.8,4.1Z"
         />
-        <text className="cls-30" transform="translate(761.64 718.07)">
-          <tspan x="0" y="0">
-            2
-          </tspan>
+        <text
+          transform="matrix(1 0 0 1 780.72 706.2307)"
+          className="st5 st6 st7"
+        >
+          2
         </text>
-        <text className="cls-30" transform="translate(757.53 688.37)">
-          <tspan x="0" y="0">
-            N
-          </tspan>
+        <text
+          transform="matrix(1 0 0 1 756.2708 701.9573)"
+          className="st5 st6 st8"
+        >
+          N
         </text>
       </g>
     </>

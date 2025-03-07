@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Atom,
   Info,
@@ -8,8 +8,9 @@ import {
   Minus,
   ChevronLeft,
   ChevronRight,
-  X,
 } from "lucide-react";
+import katex from "katex";
+import "katex/dist/katex.min.css";
 
 import { useWalkthrough } from "@/contexts/WalkthroughProvider";
 
@@ -34,7 +35,7 @@ export interface InfoSheetProps {
   proponents?: ProponentDetails[];
   sections: {
     title?: string;
-    type?: "paragraph" | "list";
+    type?: "paragraph" | "list" | "formula";
     content: string | string[];
   }[];
   examples?: {
@@ -171,15 +172,6 @@ const ImagePreviewDialog: React.FC<{
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl w-full">
         <div className="relative">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-2 right-2 z-10"
-            onClick={onClose}
-          >
-            <X className="h-6 w-6" />
-          </Button>
-
           {images.length > 1 && (
             <>
               <Button
@@ -303,6 +295,88 @@ const ExampleSection: React.FC<{
   );
 };
 
+const Formula: React.FC<{ formula: string; fontSize: number }> = ({
+  formula,
+  fontSize,
+}) => {
+  const [html, setHtml] = useState("");
+
+  useEffect(() => {
+    try {
+      const renderedFormula = katex.renderToString(formula, {
+        throwOnError: false,
+        displayMode: true,
+        fleqn: false,
+      });
+      setHtml(renderedFormula);
+    } catch (error) {
+      console.error("KaTeX rendering error:", error);
+      setHtml(
+        `<span class="text-red-500">Error rendering formula: ${formula}</span>`
+      );
+    }
+  }, [formula]);
+
+  return (
+    <div
+      className="flex justify-center my-6 bg-gray-50 py-4 rounded-lg"
+      style={{ fontSize: `${fontSize * 1.2}px` }}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+};
+
+const formatQuote = (text: string) => {
+  // Find quotes within the text
+  const quoteRegex = /"([^"]*)"/g;
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+
+  // Find all matches and build an array of text parts and quoted parts
+  while ((match = quoteRegex.exec(text)) !== null) {
+    // Add text before the quote
+    if (match.index > lastIndex) {
+      parts.push(text.substring(lastIndex, match.index));
+    }
+
+    // Add the quoted text as an italicized element
+    const quotedText = match[1];
+    parts.push(<i key={match.index}>"{quotedText}"</i>);
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Add any remaining text after the last quote
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex));
+  }
+
+  // If no quotes were found, return the original text
+  if (parts.length === 0) {
+    return text;
+  }
+
+  // Return the array of text and elements
+  return <>{parts}</>;
+};
+
+const formatListItem = (text: string) => {
+  // Bold key thermodynamic terms
+  let formattedText = text
+    .replace(/(number of moles)/gi, "<strong>$1</strong>")
+    .replace(/(temperature)/gi, "<strong>$1</strong>")
+    .replace(/(volume)/gi, "<strong>$1</strong>")
+    .replace(/(pressures)/gi, "<strong>$1</strong>");
+
+  // Italicize increases/decreases
+  formattedText = formattedText
+    .replace(/(increases)/gi, "<em>$1</em>")
+    .replace(/(decreases)/gi, "<em>$1</em>");
+
+  return <span dangerouslySetInnerHTML={{ __html: formattedText }} />;
+};
+
 export const InfoSheet: React.FC<InfoSheetProps> = ({
   title,
   subtitle,
@@ -357,22 +431,27 @@ export const InfoSheet: React.FC<InfoSheetProps> = ({
   const renderSection = (
     section: {
       title?: string;
-      type?: "paragraph" | "list";
+      type?: "paragraph" | "list" | "formula";
       content: string | string[];
     },
     fontSize: number
   ) => {
-    const formatQuote = (text: string) => {
-      const quoteRegex = /^"(.*)"$/;
-      const match = text.match(quoteRegex);
-
-      if (match) {
-        return <i>"{match[1]}"</i>;
-      }
-      return text;
-    };
-
     switch (section.type) {
+      case "formula":
+        return (
+          <div className="mt-4">
+            {section.title && (
+              <h3
+                style={{ fontSize: `${fontSize * 1.125}px` }}
+                className="font-bold mb-2"
+              >
+                {section.title}
+              </h3>
+            )}
+            <Formula formula={section.content as string} fontSize={fontSize} />
+          </div>
+        );
+
       case "list":
         return (
           <div className="mt-4">
@@ -387,12 +466,13 @@ export const InfoSheet: React.FC<InfoSheetProps> = ({
             <ul className="list-disc pl-5">
               {(section.content as string[]).map((item, itemIndex) => (
                 <li key={itemIndex} style={{ fontSize: `${fontSize}px` }}>
-                  {item}
+                  {formatListItem(item)}
                 </li>
               ))}
             </ul>
           </div>
         );
+
       default:
         return (
           <div className="mt-4">
@@ -441,7 +521,7 @@ export const InfoSheet: React.FC<InfoSheetProps> = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <SheetTrigger asChild>
-            <Button className="info-sheet-button">
+            <Button className="info-sheet-button text-xs md:text-sm">
               {headerIcon} About {title}
             </Button>
           </SheetTrigger>

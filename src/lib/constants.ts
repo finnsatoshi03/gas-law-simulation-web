@@ -458,58 +458,59 @@ export const BOYLES_LAW_INFO: InfoSheetProps = {
       title: "Description",
       type: "paragraph",
       content:
-        "Boyle's Law explains the relationship between the pressure and volume of a gas when the temperature is kept constant. It states that:",
+        'Boyle\'s Law states that "the pressure and volume of a gas are inversely proportional when temperature and the amount of gas remain constant". Mathematically, it is expressed as:',
     },
-    {
-      //   title: "Description",
-      type: "paragraph",
-      content:
-        '"The pressure of a gas is inversely proportional to its volume, provided the temperature and the amount of gas remain unchanged."',
-    },
-    { type: "paragraph", content: "It means:" },
+    { type: "formula", content: "{P_1 V_1} = {P_2 V_2}" },
+    { type: "paragraph", content: "Where:" },
     {
       type: "list",
       content: [
-        "If you squeeze a gas (decreasing its volume), its pressure increases.",
-        "If you let the gas expand (increasing its volume), its pressure decreases.",
+        "P₁ and P₂ are the initial and final pressures, respectively,",
+        "V₁​ and V₂ are the initial and final volumes, respectively.",
       ],
+    },
+    { type: "paragraph", content: "Relationship:" },
+    {
+      type: "list",
+      content: [
+        "As pressure increases, the volume decreases.",
+        "As pressure decreases, the volume increases.",
+      ],
+    },
+    {
+      type: "paragraph",
+      content:
+        "This inverse relationship means that when you compress a gas (increase pressure), it takes up less space (lower volume), and when you expand it (decrease pressure), it takes up more space (higher volume).",
     },
   ],
   examples: [
     {
       title: "Syringes",
       description: [
-        "When you pull back the plunger of a syringe, the volume inside increases, causing the pressure to drop. This creates a vacuum that draws liquid or air into the syringe. When you push the plunger, the volume decreases, increasing the pressure and forcing the liquid or air out.",
+        "When you pull the plunger, volume (V) increases, and pressure (P) decreases, allowing liquid or air to enter. Pushing the plunger decreases volume and increases pressure, forcing liquid out.",
       ],
       images: ["syringe-gif.gif", "syringe-pressure-change.webp"],
     },
     {
       title: "Scuba Diving",
       description: [
-        "Underwater, the pressure around a scuba diver increases as they go deeper. This compresses the air in their lungs and tank, reducing its volume. Divers must be cautious during ascent; if they rise too quickly without releasing the air, the expanding air (due to decreasing pressure) can damage their lungs",
+        "As a diver goes deeper, water pressure (P) increases, compressing the air in their lungs (decreasing volume, V). When ascending, pressure decreases, allowing the lungs to expand.",
       ],
       images: ["breathing.gif", "scuba-diver.gif", "air-tank.jpg"],
     },
     {
-      title: "Balloon Compression",
+      title: "Balloon in a Vacuum Chamber",
       description: [
-        "When you squeeze a balloon, the air inside is forced into a smaller space, reducing its volume. As a result, the pressure inside the balloon increases, making it harder to compress further. If squeezed too much, the pressure gets so high that the balloon pops.",
+        "If a balloon is placed in a vacuum chamber and air is removed, external pressure (P) decreases. To balance this, the gas inside the balloon expands, increasing its volume (V).",
       ],
-      images: ["balloon-science.gif", "balloon-compression.gif"],
+      images: ["balloon-in-chamber.gif", "balloon-in-chamber.jpg"],
     },
     {
-      title: "Vacuum-Sealed Bags",
+      title: "Compressed Gas Cylinders",
       description: [
-        "In food preservation, vacuum-sealed bags remove air from the packaging. When the air is sucked out, the pressure inside the bag decreases. The reduced pressure compresses the bag tightly around the food, keeping it fresh by minimizing exposure to oxygen and bacteria.",
+        "Gases are stored in high-pressure (P) tanks, such as LPG or oxygen tanks. When the gas is released, pressure decreases, allowing the gas to expand in volume (V).",
       ],
-      images: ["vacuum-sealing-machine.webp", "vacuum-sealed-food.gif"],
-    },
-    {
-      title: "Air in a Tire",
-      description: [
-        "When you inflate a bicycle or car tire, you're increasing the amount of air inside, reducing its available volume. As the volume decreases, the pressure inside the tire rises, allowing it to support the weight of the vehicle. Overinflating increases pressure too much, which can cause a blowout.",
-      ],
-      images: ["tire-inflation.gif", "pressure-gauge-tire.jpg"],
+      images: ["air-tank.jpg", "compressed-air-tank.webp"],
     },
   ],
 };
@@ -532,28 +533,47 @@ export const CHARLES_LAW_INFO: InfoSheetProps = {
       title: "Description",
       type: "paragraph",
       content:
-        "Charles's Law explains the relationship between the volume and temperature of a gas when the pressure is kept constant. It states:",
+        'Charles\'s Law states that "the volume of a gas is directly proportional to its absolute temperature when pressure and the amount of gas remain constant." Mathematically, it is expressed as:',
+    },
+    {
+      type: "formula",
+      content: "\\frac{V_1}{T_1} = \\frac{V_2}{T_2}",
     },
     {
       //   title: "Description",
       type: "paragraph",
-      content:
-        '"The volume of a gas is directly proportional to its temperature, provided the pressure and the amount of gas remain unchanged."',
+      content: "Where:",
     },
-    { type: "paragraph", content: "It means:" },
+
     {
       type: "list",
       content: [
-        "If you heat a gas, it expands (its volume increases).",
-        "If you cool a gas, it shrinks (its volume decreases).",
+        "V₁​ and V₂ are the initial and final volumes, respectively,",
+        "T₁ and T₂ are the initial and final absolute temperatures (in Kelvin), respectively.",
       ],
+    },
+    {
+      type: "paragraph",
+      content: "Relationship:",
+    },
+    {
+      type: "list",
+      content: [
+        "As temperature increases, the volume increases.",
+        "As temperature decreases, the volume decreases.",
+      ],
+    },
+    {
+      type: "paragraph",
+      content:
+        "This direct relationship means that when a gas is heated(increase in temperature), its volume expands, and when it is cooled (decrease in temperature) , its volume contracts, assuming pressure remains constant.",
     },
   ],
   examples: [
     {
       title: "Hot Air Balloons",
       description: [
-        "When the air inside a hot air balloon is heated, its temperature rises, causing the air to expand and become less dense than the cooler air outside. This allows the balloon to rise. When the air is cooled, the volume decreases, and the balloon descends.",
+        "Heating the air inside the balloon increases its temperature (T), causing the gas to expand and volume (V) to increase, making the balloon rise. Cooling the air reduces the volume, causing descent.",
       ],
       images: [
         "hot-air-balloon-inflation.gif",
@@ -562,18 +582,11 @@ export const CHARLES_LAW_INFO: InfoSheetProps = {
       ],
     },
     {
-      title: "Deflated Balloons in Cold Weather",
+      title: "Basketball in Cold Weather",
       description: [
-        "Have you ever noticed that a fully inflated balloon looks deflated on a cold day? As the temperature drops, the air inside the balloon cools, reducing its volume and making the balloon appear smaller.",
+        "A fully inflated basketball left outside in cold weather shrinks because as temperature (T) decreases, the gas inside contracts, reducing its volume (V).",
       ],
-      images: ["cold-weather-balloon.webp", "weather-balloon-launch.png"],
-    },
-    {
-      title: "Cooking with a Pressure Cooker Lid Off",
-      description: [
-        "If you heat a pot of food with the lid off, the steam above the liquid expands as it heats, taking up more volume. This demonstrates how heating a gas increases its volume, as per Charles's Law.",
-      ],
-      images: ["steam-rising-from-pot.webp", "pressure-cooker-cooking.gif"],
+      images: ["basketball-cold.jpeg", "basketball-play.gif"],
     },
     {
       title: "Car Tires in Summer and Winter",
@@ -583,11 +596,11 @@ export const CHARLES_LAW_INFO: InfoSheetProps = {
       images: ["summer-tire-temperature.jpg", "winter-tire-pressure.gif"],
     },
     {
-      title: "Popping Popcorn",
+      title: "Baking Bread",
       description: [
-        "When popcorn kernels are heated, the water inside them turns to steam. As the temperature rises, the steam expands rapidly, increasing in volume until the kernel bursts open, forming popcorn.",
+        "When baking, heat increases the temperature (T) of gases inside the dough, causing them to expand and increase in volume (V), making the bread rise.",
       ],
-      images: ["popcorn-kernel-heating.gif", "popping-popcorn-close-up.gif"],
+      images: ["baking-bread.webp", "baking-bread.gif"],
     },
   ],
 };
@@ -626,24 +639,49 @@ export const COMBINED_LAW_INFO: InfoSheetProps = {
       title: "Description",
       type: "paragraph",
       content:
-        "The Combined Gas Law brings together Boyle's Law, Charles's Law, and Gay-Lussac's Law to show the relationship between pressure (P), volume (V), and temperature (T) of a gas when the amount of gas is constant.",
+        "Combined Gas Law states that \"the pressure, volume, and absolute temperature of a gas are related, combining Boyle's, Charles's, and Gay-Lussac's Laws.\" Mathematically, it is expressed as:",
+    },
+    {
+      type: "formula",
+      content: "\\frac{P_1 V_1}{T_1} = \\frac{P_2 V_2}{T_2}",
     },
     {
       //   title: "Description",
       type: "paragraph",
-      content: "It states:",
+      content: "Where:",
+    },
+
+    {
+      type: "list",
+      content: [
+        "P₁​ and P₂ are the initial and final pressures, respectively,",
+        "V₁​ and V₂ are the initial and final volumes, respectively,",
+        "T₁ and T₂ are the initial and final absolute temperatures (in Kelvin), respectively.",
+      ],
+    },
+    {
+      type: "paragraph",
+      content: "Relationship:",
+    },
+    {
+      type: "list",
+      content: [
+        "If temperature increases while pressure remains constant, volume increases.",
+        "If pressure increases while temperature remains constant, volume decreases.",
+        "If temperature increases while volume remains constant, pressure increases.",
+      ],
     },
     {
       type: "paragraph",
       content:
-        '"The pressure, volume, and temperature of a gas are related such that the ratio P⋅V/T remains constant."',
+        "This equation allows for calculations when multiple gas variables change simultaneously.",
     },
   ],
   examples: [
     {
       title: "Weather Balloons",
       description: [
-        "Weather balloons are filled with gas at the ground level. As they rise into the atmosphere, the pressure around them decreases, causing the balloon to expand (increase in volume). Additionally, the temperature outside drops as the balloon ascends, affecting its volume further.",
+        "As a weather balloon rises, external pressure (P) decreases, and temperature (T) drops. To compensate, the volume (V) of the balloon expands until it eventually bursts, following the Combined Gas Law.",
       ],
       images: [
         "weather-balloon-launch.png",
@@ -652,16 +690,20 @@ export const COMBINED_LAW_INFO: InfoSheetProps = {
       ],
     },
     {
-      title: "Compressed Air Tanks",
+      title: "Airplane Cabin Pressure",
       description: [
-        "In scuba diving or firefighting, air is stored in high-pressure tanks. As the temperature inside the tank rises (e.g., due to heat exposure), the pressure increases, while changes in external conditions can also affect the pressure and volume of the air.",
+        "At high altitudes, both air pressure (P) and temperature (T) decrease. To ensure passenger safety, airplane cabins are pressurized by adjusting the air’s volume (V) and temperature (T) to maintain stable conditions.",
       ],
-      images: ["compressed-air-tank.webp", "air-tank.jpg"],
+      images: [
+        "airplane-altitude-diagram.jpg",
+        "cabin-pressure-control.png",
+        "airplane-in-flight.gif",
+      ],
     },
     {
       title: "Car Engine Combustion",
       description: [
-        "Inside a car engine, fuel-air mixtures are compressed in a small volume (reducing volume) and ignited, causing a rapid increase in temperature. This expansion of gases due to heating drives the pistons, demonstrating the interplay of pressure, volume, and temperature.",
+        "Inside an engine cylinder, fuel is compressed (decreasing volume, V), then ignited, causing a rapid increase in temperature (T) and pressure (P). This gas expansion powers the engine.",
       ],
       images: [
         "car-engine-cross-section.jpg",
@@ -670,22 +712,11 @@ export const COMBINED_LAW_INFO: InfoSheetProps = {
       ],
     },
     {
-      title: "Aerosol Cans",
+      title: "Compressed Gas Tanks (Scuba Diving, Oxygen Tanks)",
       description: [
-        "Aerosol cans are pressurized containers. If the can is heated (e.g., left in the sun), the gas inside expands due to the increased temperature, raising the pressure. If the pressure gets too high, the can may rupture, showing how changes in temperature and volume affect pressure.",
+        "If a gas tank is left in the sun, temperature (T) increases, causing pressure (P) to rise. Without regulation, excessive pressure buildup could make the tank dangerous.",
       ],
-      images: ["aerosol-can-heating.webp", "pressure-warning-on-can.jpg"],
-    },
-    {
-      title: "Airplane Cabin Pressure",
-      description: [
-        "As an airplane ascends, the external air pressure decreases, and the cabin's internal air pressure and temperature must be regulated to ensure comfort. The changes in these variables are managed using the principles of the Combined Gas Law.",
-      ],
-      images: [
-        "airplane-altitude-diagram.jpg",
-        "cabin-pressure-control.png",
-        "airplane-in-flight.gif",
-      ],
+      images: ["compressed-air-tank.webp", "air-tank.jpg"],
     },
   ],
 };
@@ -708,28 +739,42 @@ export const AVOGADROS_LAW_INFO: InfoSheetProps = {
       title: "Description",
       type: "paragraph",
       content:
-        "Avogadro’s Law explains the relationship between the volume and the amount (number of moles) of a gas when the pressure and temperature are kept constant. It states:",
+        'Avogadro\'s Law states that "the volume of a gas is directly proportional to the number of moles of gas when pressure and temperature remain constant." Mathematically, it is expressed as:',
     },
     {
-      //   title: "Description",
-      type: "paragraph",
-      content:
-        '"The volume of a gas is directly proportional to the number of moles of gas, provided the temperature and pressure remain unchanged."',
+      type: "formula",
+      content: "\\frac{V_1}{n_1} = \\frac{V_2}{n_2}",
     },
-    { type: "paragraph", content: "It means:" },
+    { type: "paragraph", content: "Where:" },
     {
       type: "list",
       content: [
-        "Adding more gas to a container increases its volume.",
-        "Removing gas decreases its volume.",
+        "V₁​ and V₂ are the initial and final volumes, respectively,",
+        "n₁ and n₂ are the initial and final number of moles, respectively.",
       ],
+    },
+    {
+      type: "paragraph",
+      content: "Relationship:",
+    },
+    {
+      type: "list",
+      content: [
+        "As the number of moles increases, the volume increases.",
+        "As the number of moles decreases, the volume decreases.",
+      ],
+    },
+    {
+      type: "paragraph",
+      content:
+        "This direct relationship means that adding more gas molecules to a container increases its volume, while removing gas molecules decreases the volume, assuming pressure and temperature remain constant.",
     },
   ],
   examples: [
     {
       title: "Inflating Balloons",
       description: [
-        "When you blow air into a balloon, you're increasing the number of gas molecules inside. As a result, the balloon expands in volume. If you release some air, the number of molecules decreases, and the balloon shrinks.",
+        "The more air (gas molecules, n) you add, the larger the balloon's volume (V) becomes. Removing air decreases its size, following Avogadro’s Law.",
       ],
       images: [
         "balloon-inflation-process.gif",
@@ -738,16 +783,16 @@ export const AVOGADROS_LAW_INFO: InfoSheetProps = {
       ],
     },
     {
-      title: "Breathing (Lung Expansion)",
+      title: "Lung Expansion",
       description: [
-        "When you inhale, air enters your lungs, increasing the number of gas molecules inside them. This causes your lungs to expand in volume. When you exhale, the number of gas molecules decreases, and your lung volume shrinks.",
+        "When you inhale, more gas molecules (n) enter your lungs, increasing their volume (V). Exhaling decreases the number of gas molecules, reducing lung volume.",
       ],
       images: ["lung-breathing-diagram.png", "breathing.gif"],
     },
     {
-      title: "Tires on a Long Trip",
+      title: "Tire Inflation",
       description: [
-        "As you drive, more heat is generated in your tires, which can cause the air inside to expand. Adding more air (increasing moles) also increases the tire's volume to maintain proper pressure.",
+        "Adding more gas molecules (n) into a tire increases its volume (V). Releasing air reduces the number of molecules, causing the tire to shrink.",
       ],
       images: [
         "pressure-gauge-tire.jpg",
@@ -756,18 +801,11 @@ export const AVOGADROS_LAW_INFO: InfoSheetProps = {
       ],
     },
     {
-      title: "Carbonated Drinks",
+      title: "Blowing Bubbles",
       description: [
         "When you shake a soda bottle, gas is released from the liquid into the space above it. As the amount of gas molecules increases, the pressure builds, and the volume of the gas increases, which is why the bottle feels harder to squeeze.",
       ],
-      images: ["carbonated-drink-opening.gif", "fizzy-drink-pressure.jpg"],
-    },
-    {
-      title: "Helium in Party Balloons",
-      description: [
-        "Filling multiple party balloons with helium gas demonstrates Avogadro's Law. Each balloon expands to accommodate the number of gas molecules added, showing the direct relationship between moles and volume.",
-      ],
-      images: ["helium-balloon-filling.jpg", "balloon-volume-comparison.jpg"],
+      images: ["blowing-bubbles.jpeg", "blowing-bubbles.gif"],
     },
   ],
 };
@@ -790,42 +828,58 @@ export const LUSSAC_LAW_INFO: InfoSheetProps = {
       title: "Description",
       type: "paragraph",
       content:
-        "Gay-Lussac’s Law explains the relationship between the pressure and temperature of a gas when the volume and the amount of gas are kept constant. It states:",
+        'Gay-Lussac\'s Law states that "the pressure of a gas is directly proportional to its absolute temperature when volume and the amount of gas remain constant ". Mathematically, it is expressed as:',
+    },
+    {
+      type: "formula",
+      content: "\\frac{P_1}{T_1} = \\frac{P_2}{T_2}",
     },
     {
       //   title: "Description",
       type: "paragraph",
-      content:
-        '"The pressure of a gas is directly proportional to its temperature, provided the volume and the amount of gas remain constant."',
+      content: "Where",
     },
-    { type: "paragraph", content: "It means:" },
     {
       type: "list",
       content: [
-        "Heating a gas increases its pressure.",
-        "Cooling a gas decreases its pressure.",
+        "P₁ and P₂ are the initial and final pressures, respectively,",
+        "T₁ and T₂ are the initial and final absolute temperatures (in Kelvin), respectively.",
       ],
+    },
+    { type: "paragraph", content: "Relationship:" },
+    {
+      type: "list",
+      content: [
+        "As temperature increases, pressure increases.,",
+        "As temperature decreases, pressure decreases.",
+      ],
+    },
+    {
+      type: "paragraph",
+      content:
+        "This direct relationship means that when a gas is heated (increase in temperature), its particles move faster, exerting more pressure on the container, and when cooled (decrease in temperature), the pressure decreases.",
     },
   ],
   examples: [
     {
-      title: "Pressure Cookers",
-      description: [
-        "When you heat a pressure cooker, the temperature inside rises, causing the gas molecules to move faster and collide with the container walls more frequently. This increases the pressure inside the cooker, allowing food to cook faster.",
-      ],
-      images: ["pressure-cooker-cooking.gif", "pressure-gauge-cooking.jpg"],
-    },
-    {
       title: "Aerosol Cans",
       description: [
-        "When an aerosol can is exposed to high heat (e.g., left in a hot car), the temperature of the gas inside increases. This raises the pressure, which could cause the can to burst if it becomes too high.",
+        "Heating an aerosol can increases the temperature (T), which raises the pressure (P) inside. If overheated, the pressure becomes too high, causing the can to explode.",
       ],
       images: ["aerosol-can-in-heat.webp", "pressure-warning-on-can.jpg"],
     },
     {
-      title: "Car Tires in Summer",
+      title: "Pressure Cookers",
       description: [
-        "On a hot day, the air inside car tires heats up, causing the temperature to rise. This increases the pressure inside the tires. That's why it's important to monitor tire pressure during extreme weather changes.",
+        "As the temperature (T) inside a pressure cooker rises, the gas pressure (P) increases. This high pressure allows food to cook faster.",
+      ],
+      images: ["pressure-cooker-cooking.gif", "pressure-gauge-cooking.jpg"],
+    },
+
+    {
+      title: "Car Tires on a Hot Day",
+      description: [
+        "On extremely hot days, the air inside tires heats up, increasing temperature (T) and raising pressure (P). If the pressure gets too high, the tire may burst.",
       ],
       images: [
         "summer-tire-temperature.jpg",
@@ -834,25 +888,14 @@ export const LUSSAC_LAW_INFO: InfoSheetProps = {
       ],
     },
     {
-      title: "Firing a Bullet",
+      title: "Gunpowder in Firearms",
       description: [
-        "When gunpowder in a bullet cartridge is ignited, it rapidly produces hot gases. The high temperature increases the pressure inside the cartridge, forcing the bullet out of the barrel at high speed.",
+        "When gunpowder ignites, the high temperature (T) causes gases to rapidly expand, increasing pressure (P) and generating enough force to fire the bullet.",
       ],
       images: [
         "bullet-cartridge-cross-section.webp",
         "gunpowder-explosion.gif",
         "bullet-firing-mechanism.gif",
-      ],
-    },
-    {
-      title: "Heating a Sealed Balloon",
-      description: [
-        "If you heat a balloon sealed tightly, the gas inside expands due to the increased pressure caused by the higher temperature. Eventually, the pressure may become too great for the balloon to contain, causing it to burst.",
-      ],
-      images: [
-        "balloon-heating-experiment.png",
-        "balloon-science.gif",
-        "balloon-compression.gif",
       ],
     },
   ],
@@ -878,19 +921,51 @@ export const IDEAL_LAW_INFO: InfoSheetProps = {
       title: "Description",
       type: "paragraph",
       content:
-        "The Ideal Gas Law combines all the individual gas laws into a single equation that describes the behavior of an ideal gas. It relates the pressure (P), volume (V), temperature (T), and the number of moles (n) of a gas using the gas constant (R).",
+        'Ideal Gas Law states that "the relationship among pressure, volume, temperature, and the number of moles of a gas can be described using a single equation."  Mathematically, it is expressed as:',
+    },
+    {
+      type: "formula",
+      content: "{PV} = {nRT}",
+    },
+    {
+      //   title: "Description",
+      type: "paragraph",
+      content: "Where:",
+    },
+
+    {
+      type: "list",
+      content: [
+        "P= pressure (in atm, kPa, or other units),",
+        "V= volume (in liters),",
+        "n = number of moles of gas,",
+        "R= universal gas constant (0.0821 L·atm/mol·K),",
+        "T= absolute temperature (in Kelvin).",
+      ],
+    },
+    {
+      type: "paragraph",
+      content: "Relationship:",
+    },
+    {
+      type: "list",
+      content: [
+        "Increasing temperature increases pressure and volume if other factors remain constant.",
+        "Increasing the number of moles increases pressure and volume.",
+        "Decreasing volume increases pressure if temperature and moles remain constant.",
+      ],
     },
     {
       type: "paragraph",
       content:
-        "The Ideal Gas Law is a powerful tool for understanding how gases behave under various conditions. It works best for gases at high temperatures and low pressures.",
+        "This equation describes the behavior of an ideal gas and is used to calculate any unknown variable when the others are known.",
     },
   ],
   examples: [
     {
       title: "Airbags in Cars",
       description: [
-        "When a car crashes, chemical reactions inside the airbag produce gas almost instantly. The gas fills the airbag, and the Ideal Gas Law helps determine the amount of gas needed to inflate the airbag to the right size and pressure to protect passengers.",
+        "When a car crashes, a chemical reaction inside the airbag generates nitrogen gas. The rapid increase in gas molecules (n) causes the airbag to expand (V) instantly, following the Ideal Gas Law.",
       ],
       images: [
         "car-airbag-deployment.gif",
@@ -899,40 +974,25 @@ export const IDEAL_LAW_INFO: InfoSheetProps = {
       ],
     },
     {
-      title: "Lungs and Breathing",
+      title: "Diving and Scuba Tanks",
       description: [
-        "When you inhale, your lungs expand, and air flows in to equalize the pressure. The Ideal Gas Law explains how the pressure, volume, and temperature of the air in your lungs change during breathing.",
-      ],
-      images: ["breathing.gif", "chest-expansion-during-breath.jpg"],
-    },
-    {
-      title: "Diving Tanks",
-      description: [
-        "Scuba divers use tanks filled with compressed air. The Ideal Gas Law helps calculate how much air is needed for a dive based on the pressure, volume, and temperature of the tank, ensuring divers have enough air underwater.",
+        "Scuba tanks store air at high pressure (P) and low volume (V). As a diver goes deeper, external pressure increases, affecting the gas inside the tank. The amount of air needed at different depths is calculated using the Ideal Gas Law.",
       ],
       images: ["air-tank.jpg", "compressed-air-tank.webp"],
     },
     {
-      title: "Hot Air Balloons",
+      title: "Breathing and Respiration",
       description: [
-        "The Ideal Gas Law explains why hot air balloons rise. Heating the air inside the balloon increases its temperature, decreasing its density (and thus its weight) compared to the cooler air outside, allowing the balloon to float.",
+        "When you inhale, your lung volume (V) increases, causing pressure inside to drop, allowing air to flow in. The relationship between gas amount (n), temperature (T), and pressure (P) follows the Ideal Gas Law during breathing.",
       ],
-      images: [
-        "hot-air-balloon-inflation.gif",
-        "balloon-heating-process.jpg",
-        "hot-air-balloon-rising.jpg",
-      ],
+      images: ["breathing.gif", "chest-expansion-during-breath.jpg"],
     },
     {
-      title: "Tires in Varying Weather",
+      title: "Helium Balloons",
       description: [
-        "When the temperature changes, the air pressure inside a tire also changes, as predicted by the Ideal Gas Law. For example, in cold weather, the temperature drop reduces the pressure, making tires appear underinflated.",
+        "A helium balloon expands when temperature (T) increases because volume (V) increases while pressure remains constant. On a cold day, the balloon shrinks due to lower temperatures.",
       ],
-      images: [
-        "pressure-gauge-tire.jpg",
-        "winter-tire-pressure.gif",
-        "summer-tire-temperature.jpg",
-      ],
+      images: ["helium-balloon-filling.jpg", "multiple-inflated-balloons.jpg"],
     },
   ],
 };

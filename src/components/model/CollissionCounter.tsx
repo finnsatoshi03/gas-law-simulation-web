@@ -78,7 +78,7 @@ export const CollissionCounter: React.FC<CollissionCounterProps> = ({
       <div
         ref={nodeRef}
         className={cn(
-          "absolute space-y-4 p-2 sm:p-4 bg-sidebar rounded-lg border border-sidebar-border shadow-md w-full mx-auto collision-counter",
+          "absolute space-y-4 p-2 sm:p-4 bg-zinc-100 rounded-lg border border-sidebar-border shadow-md w-[250px] md:w-[320px] max-w-full collision-counter",
           className
         )}
       >

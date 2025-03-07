@@ -11,11 +11,14 @@ import {
   Plus,
   Minus,
 } from "lucide-react";
+
+import { useWalkthrough } from "@/contexts/WalkthroughProvider";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { cn } from "@/lib/utils";
-import { useWalkthrough } from "@/contexts/WalkthroughProvider";
 
 export interface Problem {
   id: string;
@@ -45,6 +48,7 @@ export default function ProblemsSlide({
   isExpanded: controlledIsExpanded,
   setIsExpanded: onToggleExpand,
 }: ProblemsSlideProps) {
+  const isMobile = useIsMobile();
   const { state, setUiState } = useWalkthrough();
 
   const isWalkthroughActive = state.tourActive;
@@ -72,6 +76,10 @@ export default function ProblemsSlide({
   const [showHint, setShowHint] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
   const [fontSize, setFontSize] = useState(16);
+
+  useEffect(() => {
+    setFontSize(isMobile ? 12 : 16);
+  }, [isMobile]);
 
   useEffect(() => {
     const storedProblems = localStorage.getItem("gas_laws_problems");
@@ -141,7 +149,7 @@ export default function ProblemsSlide({
         <TooltipTrigger asChild>
           <Button
             onClick={() => setIsExpanded(true)}
-            className="problems-slide-button"
+            className="problems-slide-button text-xs md:text-sm"
           >
             <Puzzle />
             Practice {getGasLawTitle(type)}
@@ -166,10 +174,10 @@ export default function ProblemsSlide({
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
               <GripVertical className="size-4 text-muted-foreground drag-handle cursor-grab active:cursor-grabbing -ml-1" />
-              <CardTitle className="text-lg font-semibold">
+              <CardTitle className="text-sm md:text-lg font-semibold">
                 {getGasLawTitle(type)}
               </CardTitle>
-              <p className="text-sm text-gray-500">
+              <p className="text-xs md:text-sm text-gray-500">
                 Problem {currentIndex + 1} of {problems.length}
               </p>
             </div>
