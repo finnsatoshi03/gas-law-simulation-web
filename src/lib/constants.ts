@@ -803,9 +803,9 @@ export const AVOGADROS_LAW_INFO: InfoSheetProps = {
     {
       title: "Blowing Bubbles",
       description: [
-        "When you shake a soda bottle, gas is released from the liquid into the space above it. As the amount of gas molecules increases, the pressure builds, and the volume of the gas increases, which is why the bottle feels harder to squeeze.",
+        "The more air (gas molecules, n) you blow into a bubble, the larger its volume (V) becomes. Less air results in a smaller bubble.",
       ],
-      images: ["blowing-bubbles.jpeg", "blowing-bubbles.gif"],
+      images: ["blowing-bubbles.jpg", "blowing-bubbles.gif"],
     },
   ],
 };
