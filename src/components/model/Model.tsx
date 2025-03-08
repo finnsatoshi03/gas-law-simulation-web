@@ -141,21 +141,6 @@ const GasLawsSimulation: React.FC<Props> = ({
     setIsUserControlling(false);
   };
 
-  useEffect(() => {
-    const preventScroll = (e: TouchEvent) => {
-      if (interactionRef.current) {
-        e.preventDefault();
-      }
-    };
-
-    // Add the event listener with the non-passive option to allow preventDefault
-    document.addEventListener('touchmove', preventScroll, { passive: false });
-    
-    return () => {
-      document.removeEventListener('touchmove', preventScroll);
-    };
-  }, []);
-
   // Handle both mouse and touch events for pump
   const handlePumpMouseDown = (e: React.MouseEvent) => {
     if (!canControlPump) return;
