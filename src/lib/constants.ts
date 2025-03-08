@@ -586,7 +586,7 @@ export const CHARLES_LAW_INFO: InfoSheetProps = {
       description: [
         "A fully inflated basketball left outside in cold weather shrinks because as temperature (T) decreases, the gas inside contracts, reducing its volume (V).",
       ],
-      images: ["basketball-cold.jpeg", "basketball-play.gif"],
+      images: ["basketball-cold.jpg", "basketball-play.gif"],
     },
     {
       title: "Car Tires in Summer and Winter",
