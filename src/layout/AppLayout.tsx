@@ -13,7 +13,7 @@ export default function AppLayout() {
         <WalkthroughWrapper />
         <AppSidebar />
         <main className="p-4 w-full">
-          <SidebarTrigger />
+          <SidebarTrigger className="relative z-50"/>
           <Outlet />
         </main>
       </TooltipProvider>
