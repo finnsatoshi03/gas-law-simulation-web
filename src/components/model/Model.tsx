@@ -145,6 +145,7 @@ const GasLawsSimulation: React.FC<Props> = ({
   const handlePumpMouseDown = (e: React.MouseEvent) => {
     if (!canControlPump) return;
     e.preventDefault();
+    e.stopPropagation();
     setIsPumpDragging(true);
     setPumpStartY(e.clientY - pumpOffset);
     lastPumpPosition.current = pumpOffset;
@@ -153,6 +154,7 @@ const GasLawsSimulation: React.FC<Props> = ({
   const handlePumpTouchStart = (e: React.TouchEvent) => {
     if (!canControlPump) return;
     e.preventDefault();
+    e.stopPropagation();
     setIsPumpDragging(true);
     setPumpStartY(e.touches[0].clientY - pumpOffset);
     lastPumpPosition.current = pumpOffset;
@@ -162,6 +164,7 @@ const GasLawsSimulation: React.FC<Props> = ({
   const handleVolumeMouseDown = (e: React.MouseEvent) => {
     if (!canControlVolume) return;
     e.preventDefault();
+    e.stopPropagation();
     setIsUserControlling(true);
     setIsVolumeDragging(true);
     setVolumeStartY(e.clientY);
@@ -170,6 +173,7 @@ const GasLawsSimulation: React.FC<Props> = ({
   const handleVolumeTouchStart = (e: React.TouchEvent) => {
     if (!canControlVolume) return;
     e.preventDefault();
+    e.stopPropagation();
     setIsUserControlling(true);
     setIsVolumeDragging(true);
     setVolumeStartY(e.touches[0].clientY);
