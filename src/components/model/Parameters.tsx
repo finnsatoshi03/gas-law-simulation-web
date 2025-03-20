@@ -352,8 +352,43 @@ const GasLawInputGroup: React.FC<GasLawInputGroupProps> = ({
   const config = GAS_LAW_CONFIGS[lawType];
 
   useEffect(() => {
-    calculateResult(lawType, values, units);
-  }, [lawType, values, units]);
+    // Define required count based on gas law type
+    const requiredCountMap = {
+      boyles: 3, // Need 3 out of 4 variables (p1, v1, p2, v2)
+      charles: 3, // Need 3 out of 4 variables (v1, t1, v2, t2)
+      gayLussac: 3, // Need 3 out of 4 variables (p1, t1, p2, t2)
+      avogadro: 3, // Need 3 out of 4 variables (v1, n1, v2, n2)
+      combined: 5, // Need 5 out of 6 variables (p1, v1, t1, p2, v2, t2)
+      ideal: 3, // Need 3 out of 4 variables (p, v, n, t)
+    } as const;
+
+    // Count filled variables that are part of the calculation (not constants)
+    const filledVariables = config.variables.filter(
+      (v) => !disabledFields.includes(v.id) && values[v.id]?.trim() !== ""
+    ).length;
+
+    // Use the required count for the current law type or default to variables.length - 1
+    const requiredCount =
+      lawType in requiredCountMap
+        ? requiredCountMap[lawType as keyof typeof requiredCountMap]
+        : config.variables.length - 1;
+
+    if (filledVariables >= requiredCount) {
+      calculateResult(lawType, values, units);
+    } else if (result) {
+      // Clear result if we don't have enough filled variables
+      clearResult();
+    }
+  }, [
+    lawType,
+    values,
+    units,
+    calculateResult,
+    clearResult,
+    result,
+    config.variables,
+    disabledFields,
+  ]);
 
   const handleValueChange = (id: string, value: string) => {
     let newValue = value;

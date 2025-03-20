@@ -7,7 +7,6 @@ import katex from "katex";
 import "katex/dist/katex.min.css";
 
 import { GAS_CONSTANTS } from "@/lib/constants";
-import { useAuth } from "@/contexts/AuthContext";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
@@ -58,8 +57,6 @@ export const SolutionSheet: React.FC<SolutionSheetProps> = ({
   const [rememberSolution, setRememberSolution] = useState(false);
   const [showSolutionContent, setShowSolutionContent] = useState(false);
 
-  const { isAuthenticated } = useAuth();
-
   const authSchema = z.object({
     password: z.string(),
   });
@@ -68,6 +65,7 @@ export const SolutionSheet: React.FC<SolutionSheetProps> = ({
     const savedSolutionAuth = localStorage.getItem("solutionSheetAuth");
     if (savedSolutionAuth) {
       setSolutionAuthenticated(true);
+      setShowSolutionContent(true);
     }
   }, []);
 
@@ -94,12 +92,6 @@ export const SolutionSheet: React.FC<SolutionSheetProps> = ({
         message: "Invalid solution password",
       });
     }
-  };
-
-  const handleLogout = () => {
-    setSolutionAuthenticated(false);
-    localStorage.removeItem("solutionSheetAuth");
-    setShowSolutionContent(false);
   };
 
   const calculatedVariable = useMemo(() => {
@@ -197,10 +189,14 @@ export const SolutionSheet: React.FC<SolutionSheetProps> = ({
     }
   };
 
-  if (!result || !isAuthenticated) return null;
+  if (!result) return null;
 
   return (
-    <Dialog onOpenChange={() => handleLogout()}>
+    <Dialog
+      onOpenChange={(open) => {
+        if (!open) setShowSolutionContent(false);
+      }}
+    >
       <Tooltip>
         <TooltipTrigger asChild>
           <DialogTrigger asChild>
@@ -294,24 +290,26 @@ export const SolutionSheet: React.FC<SolutionSheetProps> = ({
               <h2 className="text-xl font-bold">
                 {lawType} Calculation Solution
               </h2>
-              {result && solutionSteps && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowSolutionContent(!showSolutionContent)}
-                  className="flex items-center gap-2"
-                >
-                  {showSolutionContent ? (
-                    <>
-                      <ChevronUp size={16} /> Hide Solution
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown size={16} /> Show Solution
-                    </>
-                  )}
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {result && solutionSteps && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowSolutionContent(!showSolutionContent)}
+                    className="flex items-center gap-2"
+                  >
+                    {showSolutionContent ? (
+                      <>
+                        <ChevronUp size={16} /> Hide Solution
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown size={16} /> Show Solution
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
             </div>
 
             {result && solutionSteps && showSolutionContent && (
@@ -331,10 +329,26 @@ export const SolutionSheet: React.FC<SolutionSheetProps> = ({
 
                 <div className="mt-4 p-3 bg-green-100 rounded">
                   <h4 className="font-medium">Calculated Value</h4>
-                  <p>
-                    {calculatedVariable}: {result.value}{" "}
-                    {units[calculatedVariable!]}
-                  </p>
+                  <p
+                    dangerouslySetInnerHTML={{
+                      __html: renderEquation(
+                        `${
+                          calculatedVariable?.includes("1")
+                            ? calculatedVariable[0].toUpperCase() +
+                              calculatedVariable.substring(1).replace("1", "_1")
+                            : calculatedVariable?.includes("2")
+                            ? calculatedVariable[0].toUpperCase() +
+                              calculatedVariable.substring(1).replace("2", "_2")
+                            : calculatedVariable
+                            ? calculatedVariable[0].toUpperCase() +
+                              calculatedVariable.substring(1)
+                            : ""
+                        } = ${result.value}\\text{ ${
+                          units[calculatedVariable!]
+                        }}`
+                      ),
+                    }}
+                  />
                 </div>
               </div>
             )}
@@ -789,7 +803,7 @@ const idealGasLawSolution = (
         denominator_calculation: `${v}\\text{ L}`,
         final_calculation: `\\frac{${n}\\textcolor{red}{\\cancel{\\text{ mol}}} \\times ${R}\\text{ ${
           units.p
-        }⋅}\\textcolor{red}{\\cancel{\\text{L}}}\\text{/}\\textcolor{red}{\\cancel{\\text{mol}}}\\text{⋅}\\textcolor{red}{\\cancel{\\text{K}}} \\times ${t}\\textcolor{red}{\\cancel{\\text{ K}}}}{${v}\\textcolor{red}{\\cancel{\\text{ L}}}} = ${(
+        }⋅}\\textcolor{red}{\\cancel{\\text{L}}}\\text{/}\\textcolor{red}{\\cancel{\\text{mol⋅K}}} \\times ${t}\\textcolor{red}{\\cancel{\\text{ K}}}}{${v}\\textcolor{red}{\\cancel{\\text{ L}}}} = ${(
           (n * R * t) /
           v
         ).toFixed(4)}\\text{ ${units.p}}`,
@@ -821,12 +835,12 @@ const idealGasLawSolution = (
         }⋅L}`,
         denominator_calculation: `(${R}\\text{ ${rUnit}}) \\times (${t}\\text{ K}) = ${(
           R * t
-        ).toFixed(4)}\\text{ ${units.p}⋅L/mol}`,
+        ).toFixed(4)}\\text{ ${units.p}⋅L/mol⋅K}`,
         final_calculation: `\\frac{${p}\\textcolor{red}{\\cancel{\\text{ ${
           units.p
         }}}} \\times ${v}\\textcolor{red}{\\cancel{\\text{ L}}}}{${R}\\textcolor{red}{\\cancel{\\text{ ${
           units.p
-        }}}}\\textcolor{red}{\\cancel{\\text{⋅L}}}\\text{/mol} \\times ${t}\\textcolor{red}{\\cancel{\\text{ K}}}} = ${(
+        }}}}\\textcolor{red}{\\cancel{\\text{⋅L}}}\\text{/mol⋅}\\textcolor{red}{\\cancel{\\text{K}}} \\times ${t}\\textcolor{red}{\\cancel{\\text{ K}}}} = ${(
           (p * v) /
           (R * t)
         ).toFixed(4)}\\text{ mol}`,
@@ -842,12 +856,12 @@ const idealGasLawSolution = (
         }⋅L}`,
         denominator_calculation: `(${n}\\text{ mol}) \\times (${R}\\text{ ${rUnit}}) = ${(
           n * R
-        ).toFixed(4)}\\text{ ${units.p}⋅L/mol}`,
+        ).toFixed(4)}\\text{ ${units.p}⋅L/mol⋅K}`,
         final_calculation: `\\frac{${p}\\textcolor{red}{\\cancel{\\text{ ${
           units.p
         }}}} \\times ${v}\\textcolor{red}{\\cancel{\\text{ L}}}}{${n}\\textcolor{red}{\\cancel{\\text{ mol}}} \\times ${R}\\textcolor{red}{\\cancel{\\text{ ${
           units.p
-        }}}}\\textcolor{red}{\\cancel{\\text{⋅L}}}\\text{/}\\textcolor{red}{\\cancel{\\text{mol}}}} = ${(
+        }}}}\\textcolor{red}{\\cancel{\\text{⋅L}}}\\text{/}\\textcolor{red}{\\cancel{\\text{mol}}}\\text{⋅K}} = ${(
           (p * v) /
           (n * R)
         ).toFixed(4)}\\text{ K}`,
