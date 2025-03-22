@@ -1,54 +1,89 @@
-# React + TypeScript + Vite
+# Gas Law Simulation Web Application
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An interactive web-based simulator for exploring and learning gas laws through dynamic visualizations and practical problem-solving.
 
-Currently, two official plugins are available:
+## Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+This application provides an intuitive platform for students, educators, and enthusiasts to visualize gas law behaviors in real-time. Through interactive simulations, users can manipulate variables like pressure, volume, temperature, and the number of gas molecules to observe how these parameters affect each other according to various gas laws.
 
-## Expanding the ESLint configuration
+## Features
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Interactive Simulations**: Visualize gas behavior with real-time molecule movement and collision dynamics
+- **Multiple Gas Laws**: Explore all major gas laws:
+  - Boyle's Law (P₁V₁ = P₂V₂)
+  - Charles's Law (V₁/T₁ = V₂/T₂)
+  - Gay-Lussac's Law (P₁/T₁ = P₂/T₂)
+  - Avogadro's Law (V ∝ n)
+  - Combined Gas Law (P₁V₁/T₁ = P₂V₂/T₂)
+  - Ideal Gas Law (PV = nRT)
+- **Parameter Control**: Adjust volume, pressure, temperature, and molecule count
+- **Unit Conversions**: Switch between different units for pressure, volume, and temperature
+- **Problem Sets**: Practice with sample problems for each gas law
+- **Solution Sheets**: Get detailed solutions and explanations
+- **Animated Transitions**: Smooth animations when changing between different states
+- **Responsive Design**: Works on desktop and mobile devices
+- **Walkthrough Tutorials**: Guided tours for learning how to use the application
+- **Documentation**: Comprehensive guides and explanations of gas law concepts
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/gas-law-simulation-web.git
+cd gas-law-simulation-web
+
+# Install dependencies
+npm install
+
+# Start the development server
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Usage
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+1. Navigate to the home screen and select a gas law to explore
+2. Use the sliders and input fields to manipulate gas parameters
+3. Observe how changes in one parameter affect the others
+4. View the solution sheet for mathematical representations
+5. Try solving sample problems to test your understanding
+6. Consult the documentation for more detailed explanations
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+## Technologies Used
+
+- **React** - UI component library
+- **TypeScript** - Type-safe JavaScript
+- **Vite** - Frontend build tool
+- **Framer Motion** - Animation library
+- **React Router** - Navigation
+- **TailwindCSS** - Styling
+- **Radix UI** - Accessible UI components
+- **React Hook Form** - Form handling
+- **KaTeX** - Mathematical formula rendering
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+MIT License
+
+Copyright (c) 2024 Gas Law Simulation Web
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
