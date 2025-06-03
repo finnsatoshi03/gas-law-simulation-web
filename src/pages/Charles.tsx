@@ -8,6 +8,11 @@ import { InfoSheet } from "@/components/InfoSheet";
 import { CHARLES_LAW_INFO } from "@/lib/constants";
 import { GasLawType, SolutionSheet } from "@/components/SolutionSheet";
 import ProblemsSlide from "@/components/ProblemsSlide";
+import SimulationControlSelector, {
+  SimulationControlState,
+  ControlType,
+  ValueType,
+} from "@/components/model/SimulationControlSelector";
 
 export default function Charles() {
   const { result } = useGasLaw();
@@ -27,35 +32,51 @@ export default function Charles() {
     p: "atm",
     n: "mol",
   });
+  const [controlState, setControlState] = useState<SimulationControlState>({
+    volume: "initial",
+    temperature: "initial",
+    pressure: "initial",
+    pump: "initial",
+  });
 
-  const handleSimulationVolumeChange = (volume: number) => {
+  const handleSimulationVolumeChange = (
+    volume: number,
+    target: "initial" | "final"
+  ) => {
     // Round to 2 decimal places for better UX
     const roundedVolume = Math.round(volume * 100) / 100;
 
-    // Determine which volume to update based on which one is not the result
-    if (result?.target === "v1") {
-      setValues((prev) => ({ ...prev, v2: roundedVolume.toString() }));
-    } else if (result?.target === "v2") {
+    // Update based on the target parameter from control state
+    if (target === "initial") {
       setValues((prev) => ({ ...prev, v1: roundedVolume.toString() }));
     } else {
-      // If no result is set, update v1 by default
-      setValues((prev) => ({ ...prev, v1: roundedVolume.toString() }));
+      setValues((prev) => ({ ...prev, v2: roundedVolume.toString() }));
     }
   };
 
-  const handleTemperatureChange = (temperature: number) => {
+  const handleTemperatureChange = (
+    temperature: number,
+    target: "initial" | "final"
+  ) => {
     // Round to 1 decimal place for better UX
     const roundedTemp = Math.round(temperature * 10) / 10;
 
-    // Determine which temperature to update based on which one is not the result
-    if (result?.target === "t1") {
-      setValues((prev) => ({ ...prev, t2: roundedTemp.toString() }));
-    } else if (result?.target === "t2") {
+    // Update based on the target parameter from control state
+    if (target === "initial") {
       setValues((prev) => ({ ...prev, t1: roundedTemp.toString() }));
     } else {
-      // If no result is set, update t1 by default
-      setValues((prev) => ({ ...prev, t1: roundedTemp.toString() }));
+      setValues((prev) => ({ ...prev, t2: roundedTemp.toString() }));
     }
+  };
+
+  const handleControlStateChange = (
+    controlType: ControlType,
+    valueType: ValueType
+  ) => {
+    setControlState((prev) => ({
+      ...prev,
+      [controlType]: valueType,
+    }));
   };
 
   const simulationProps = useMemo(() => {
@@ -70,6 +91,7 @@ export default function Charles() {
       pressureUnit: units.p,
       onVolumeChange: handleSimulationVolumeChange,
       onTemperatureChange: handleTemperatureChange,
+      controlState: controlState,
     };
 
     if (result?.target === "v1") {
@@ -113,19 +135,26 @@ export default function Charles() {
   return (
     <div className="flex items-center w-full justify-center h-[95%] relative">
       <div className="absolute top-4 z-10 left-2">
-        <GasLawInputGroup
-          lawType="charles"
-          values={values}
-          units={units}
-          onValueChange={handleValueChange}
-          onUnitChange={handleUnitChange}
-          disabledFields={[
-            "n",
-            "p",
-            ...(result?.target ? [result.target] : []),
-          ]}
-        />
-        <CollissionCounter />
+        <div className="space-y-2">
+          <SimulationControlSelector
+            gasLaw="charles"
+            controlState={controlState}
+            onControlStateChange={handleControlStateChange}
+          />
+          <GasLawInputGroup
+            lawType="charles"
+            values={values}
+            units={units}
+            onValueChange={handleValueChange}
+            onUnitChange={handleUnitChange}
+            disabledFields={[
+              "n",
+              "p",
+              ...(result?.target ? [result.target] : []),
+            ]}
+          />
+          <CollissionCounter />
+        </div>
       </div>
       <div className="absolute top-4 z-10 right-2 flex items-end flex-col gap-2">
         <InfoSheet {...CHARLES_LAW_INFO} />

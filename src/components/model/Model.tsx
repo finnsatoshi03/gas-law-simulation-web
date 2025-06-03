@@ -53,10 +53,19 @@ export interface Props {
   pressureUnit?: PressureUnit;
   moleculeCount?: number;
   temperatureUnit?: "K" | "C" | "F";
-  onVolumeChange?: (volume: number) => void;
-  onPressureChange?: (pressure: number) => void;
-  onTemperatureChange?: (temperature: number) => void;
+  onVolumeChange?: (volume: number, target: "initial" | "final") => void;
+  onPressureChange?: (pressure: number, target: "initial" | "final") => void;
+  onTemperatureChange?: (
+    temperature: number,
+    target: "initial" | "final"
+  ) => void;
   onMoleculeCountChange?: (count: number) => void;
+  controlState?: {
+    volume: "initial" | "final";
+    temperature: "initial" | "final";
+    pressure: "initial" | "final";
+    pump: "initial" | "final";
+  };
   className?: string;
 }
 
@@ -76,6 +85,12 @@ const GasLawsSimulation: React.FC<Props> = ({
   onPressureChange,
   onTemperatureChange,
   onMoleculeCountChange,
+  controlState = {
+    volume: "initial",
+    temperature: "initial",
+    pressure: "initial",
+    pump: "initial",
+  },
   className,
 }) => {
   const { settings } = useSimulationSettings();
@@ -260,7 +275,7 @@ const GasLawsSimulation: React.FC<Props> = ({
     );
     setCurrentPressure(newPressure);
     setBarometerAngle(calculateBarometerAngle(newPressure));
-    onPressureChange?.(newPressure);
+    onPressureChange?.(newPressure, controlState.pressure);
   };
 
   const sliderValue = pressureToSliderValue(
@@ -501,7 +516,7 @@ const GasLawsSimulation: React.FC<Props> = ({
 
           // Calculate and emit the new volume
           const newVolume = calculateVolumeFromPosition(newPosition);
-          onVolumeChange?.(newVolume);
+          onVolumeChange?.(newVolume, controlState.volume);
 
           return newPosition;
         });
@@ -544,7 +559,7 @@ const GasLawsSimulation: React.FC<Props> = ({
             Math.min(MAX_VOLUME_POSITION, prev + deltaY)
           );
           const newVolume = calculateVolumeFromPosition(newPosition);
-          onVolumeChange?.(newVolume);
+          onVolumeChange?.(newVolume, controlState.volume);
           return newPosition;
         });
         setVolumeStartY(e.clientY);
@@ -569,7 +584,7 @@ const GasLawsSimulation: React.FC<Props> = ({
             Math.min(MAX_VOLUME_POSITION, prev + deltaY)
           );
           const newVolume = calculateVolumeFromPosition(newPosition);
-          onVolumeChange?.(newVolume);
+          onVolumeChange?.(newVolume, controlState.volume);
           return newPosition;
         });
         setVolumeStartY(e.touches[0].clientY);
@@ -903,7 +918,7 @@ const GasLawsSimulation: React.FC<Props> = ({
               temperature={temperature}
               setTemperature={(temp) => {
                 setTemperature(temp);
-                onTemperatureChange?.(temp);
+                onTemperatureChange?.(temp, controlState.temperature);
               }}
               unit={temperatureUnit || "K"}
               disabled={!canControlTemperature}

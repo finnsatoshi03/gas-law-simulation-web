@@ -8,6 +8,11 @@ import { InfoSheet } from "@/components/InfoSheet";
 import { AVOGADROS_LAW_INFO } from "@/lib/constants";
 import { GasLawType, SolutionSheet } from "@/components/SolutionSheet";
 import ProblemsSlide from "@/components/ProblemsSlide";
+import SimulationControlSelector, {
+  SimulationControlState,
+  ControlType,
+  ValueType,
+} from "@/components/model/SimulationControlSelector";
 
 export default function Avogadros() {
   const { result } = useGasLaw();
@@ -27,28 +32,40 @@ export default function Avogadros() {
     t: "K",
     p: "atm",
   });
+  const [controlState, setControlState] = useState<SimulationControlState>({
+    volume: "initial",
+    temperature: "initial",
+    pressure: "initial",
+    pump: "initial",
+  });
 
-  const handleSimulationVolumeChange = (volume: number) => {
+  const handleSimulationVolumeChange = (
+    volume: number,
+    target: "initial" | "final"
+  ) => {
     const roundedVolume = Math.round(volume * 100) / 100;
-    if (result?.target === "v1") {
-      setValues((prev) => ({ ...prev, v2: roundedVolume.toString() }));
-    } else if (result?.target === "v2") {
+    if (target === "initial") {
       setValues((prev) => ({ ...prev, v1: roundedVolume.toString() }));
     } else {
-      setValues((prev) => ({ ...prev, v1: roundedVolume.toString() }));
+      setValues((prev) => ({ ...prev, v2: roundedVolume.toString() }));
     }
   };
 
   const handleSimulationMoleculeCountChange = (count: number) => {
     // Round to nearest whole number since we can't have partial molecules
     const roundedCount = Math.round(count);
-    if (result?.target === "n1") {
-      setValues((prev) => ({ ...prev, n2: roundedCount.toString() }));
-    } else if (result?.target === "n2") {
-      setValues((prev) => ({ ...prev, n1: roundedCount.toString() }));
-    } else {
-      setValues((prev) => ({ ...prev, n1: roundedCount.toString() }));
-    }
+    // For Avogadro's law, molecule count typically affects n2 (final state)
+    setValues((prev) => ({ ...prev, n2: roundedCount.toString() }));
+  };
+
+  const handleControlStateChange = (
+    controlType: ControlType,
+    valueType: ValueType
+  ) => {
+    setControlState((prev) => ({
+      ...prev,
+      [controlType]: valueType,
+    }));
   };
 
   const simulationProps = useMemo(() => {
@@ -64,6 +81,7 @@ export default function Avogadros() {
       pressureUnit: units.p,
       onVolumeChange: handleSimulationVolumeChange,
       onMoleculeCountChange: handleSimulationMoleculeCountChange,
+      controlState: controlState,
     };
 
     if (result?.target === "v1") {
@@ -89,15 +107,22 @@ export default function Avogadros() {
   return (
     <div className="flex items-center w-full justify-center h-[95%] relative">
       <div className="absolute top-4 z-10 left-2">
-        <GasLawInputGroup
-          lawType="avogadro"
-          values={values}
-          units={units}
-          onValueChange={handleValueChange}
-          onUnitChange={handleUnitChange}
-          disabledFields={result?.target ? [result.target] : []}
-        />
-        <CollissionCounter />
+        <div className="space-y-2">
+          <SimulationControlSelector
+            gasLaw="avogadro"
+            controlState={controlState}
+            onControlStateChange={handleControlStateChange}
+          />
+          <GasLawInputGroup
+            lawType="avogadro"
+            values={values}
+            units={units}
+            onValueChange={handleValueChange}
+            onUnitChange={handleUnitChange}
+            disabledFields={result?.target ? [result.target] : []}
+          />
+          <CollissionCounter />
+        </div>
       </div>
       <div className="absolute top-4 z-10 right-2 flex items-end flex-col gap-2">
         <InfoSheet {...AVOGADROS_LAW_INFO} />

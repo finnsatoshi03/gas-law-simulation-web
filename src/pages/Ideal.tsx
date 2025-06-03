@@ -8,6 +8,11 @@ import { InfoSheet } from "@/components/InfoSheet";
 import { IDEAL_LAW_INFO } from "@/lib/constants";
 import { GasLawType, SolutionSheet } from "@/components/SolutionSheet";
 import ProblemsSlide from "@/components/ProblemsSlide";
+import SimulationControlSelector, {
+  SimulationControlState,
+  ControlType,
+  ValueType,
+} from "@/components/model/SimulationControlSelector";
 
 export default function Ideal() {
   const { result } = useGasLaw();
@@ -23,8 +28,18 @@ export default function Ideal() {
     n: "mol",
     t: "K",
   });
+  const [controlState, setControlState] = useState<SimulationControlState>({
+    volume: "initial",
+    temperature: "initial",
+    pressure: "initial",
+    pump: "initial",
+  });
 
-  const handleSimulationVolumeChange = (volume: number) => {
+  const handleSimulationVolumeChange = (
+    volume: number,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    target: "initial" | "final"
+  ) => {
     // Round to 2 decimal places for better UX
     const roundedVolume = Math.round(volume * 100) / 100;
 
@@ -34,20 +49,30 @@ export default function Ideal() {
     }
   };
 
-  const handleSimulationPressureChange = (pressure: number) => {
+  const handleSimulationPressureChange = (
+    pressure: number,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    target: "initial" | "final"
+  ) => {
     // Round to 2 decimal places for better UX
     const roundedPressure = Math.round(pressure * 100) / 100;
 
+    // For ideal gas law, we only have single values, so ignore target parameter
     // Only update if pressure is not the calculated result
     if (result?.target !== "p") {
       setValues((prev) => ({ ...prev, p: roundedPressure.toString() }));
     }
   };
 
-  const handleTemperatureChange = (temperature: number) => {
+  const handleTemperatureChange = (
+    temperature: number,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    target: "initial" | "final"
+  ) => {
     // Round to 1 decimal place for better UX
     const roundedTemp = Math.round(temperature * 10) / 10;
 
+    // For ideal gas law, we only have single values, so ignore target parameter
     // Only update if temperature is not the calculated result
     if (result?.target !== "t") {
       setValues((prev) => ({ ...prev, t: roundedTemp.toString() }));
@@ -59,6 +84,16 @@ export default function Ideal() {
     if (result?.target !== "n") {
       setValues((prev) => ({ ...prev, n: count.toString() }));
     }
+  };
+
+  const handleControlStateChange = (
+    controlType: ControlType,
+    valueType: ValueType
+  ) => {
+    setControlState((prev) => ({
+      ...prev,
+      [controlType]: valueType,
+    }));
   };
 
   const simulationProps = useMemo(() => {
@@ -75,6 +110,7 @@ export default function Ideal() {
       onPressureChange: handleSimulationPressureChange,
       onTemperatureChange: handleTemperatureChange,
       onMoleculeCountChange: handleSimulationMoleculeCountChange,
+      controlState: controlState,
     };
 
     // Handle calculated values from gas law context
@@ -109,15 +145,22 @@ export default function Ideal() {
   return (
     <div className="flex items-center w-full justify-center h-[95%] relative">
       <div className="absolute top-4 z-10 left-2">
-        <GasLawInputGroup
-          lawType="ideal"
-          values={values}
-          units={units}
-          onValueChange={handleValueChange}
-          onUnitChange={handleUnitChange}
-          disabledFields={result?.target ? [result.target] : []}
-        />
-        <CollissionCounter />
+        <div className="space-y-2">
+          <SimulationControlSelector
+            gasLaw="ideal"
+            controlState={controlState}
+            onControlStateChange={handleControlStateChange}
+          />
+          <GasLawInputGroup
+            lawType="ideal"
+            values={values}
+            units={units}
+            onValueChange={handleValueChange}
+            onUnitChange={handleUnitChange}
+            disabledFields={result?.target ? [result.target] : []}
+          />
+          <CollissionCounter />
+        </div>
       </div>
       <div className="absolute top-4 z-10 right-2 flex items-end flex-col gap-2">
         <InfoSheet {...IDEAL_LAW_INFO} />

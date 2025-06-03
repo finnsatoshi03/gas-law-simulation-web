@@ -9,6 +9,11 @@ import { InfoSheet } from "@/components/InfoSheet";
 import { LUSSAC_LAW_INFO } from "@/lib/constants";
 import { GasLawType, SolutionSheet } from "@/components/SolutionSheet";
 import ProblemsSlide from "@/components/ProblemsSlide";
+import SimulationControlSelector, {
+  SimulationControlState,
+  ControlType,
+  ValueType,
+} from "@/components/model/SimulationControlSelector";
 
 export default function Lussac() {
   const { result } = useGasLaw();
@@ -28,35 +33,51 @@ export default function Lussac() {
     v: "L",
     n: "mol",
   });
+  const [controlState, setControlState] = useState<SimulationControlState>({
+    volume: "initial",
+    temperature: "initial",
+    pressure: "initial",
+    pump: "initial",
+  });
 
-  const handleSimulationPressureChange = (pressure: number) => {
+  const handleSimulationPressureChange = (
+    pressure: number,
+    target: "initial" | "final"
+  ) => {
     // Round to 2 decimal places for better UX
     const roundedPressure = Math.round(pressure * 100) / 100;
 
-    // Determine which pressure to update based on which one is not the result
-    if (result?.target === "p1") {
-      setValues((prev) => ({ ...prev, p2: roundedPressure.toString() }));
-    } else if (result?.target === "p2") {
+    // Update based on the target parameter from control state
+    if (target === "initial") {
       setValues((prev) => ({ ...prev, p1: roundedPressure.toString() }));
     } else {
-      // If no result is set, update p1 by default
-      setValues((prev) => ({ ...prev, p1: roundedPressure.toString() }));
+      setValues((prev) => ({ ...prev, p2: roundedPressure.toString() }));
     }
   };
 
-  const handleTemperatureChange = (temperature: number) => {
+  const handleTemperatureChange = (
+    temperature: number,
+    target: "initial" | "final"
+  ) => {
     // Round to 1 decimal place for better UX
     const roundedTemp = Math.round(temperature * 10) / 10;
 
-    // Determine which temperature to update based on which one is not the result
-    if (result?.target === "t1") {
-      setValues((prev) => ({ ...prev, t2: roundedTemp.toString() }));
-    } else if (result?.target === "t2") {
+    // Update based on the target parameter from control state
+    if (target === "initial") {
       setValues((prev) => ({ ...prev, t1: roundedTemp.toString() }));
     } else {
-      // If no result is set, update t1 by default
-      setValues((prev) => ({ ...prev, t1: roundedTemp.toString() }));
+      setValues((prev) => ({ ...prev, t2: roundedTemp.toString() }));
     }
+  };
+
+  const handleControlStateChange = (
+    controlType: ControlType,
+    valueType: ValueType
+  ) => {
+    setControlState((prev) => ({
+      ...prev,
+      [controlType]: valueType,
+    }));
   };
 
   const simulationProps = useMemo(() => {
@@ -73,6 +94,7 @@ export default function Lussac() {
       pressureUnit: units.p1,
       onPressureChange: handleSimulationPressureChange,
       onTemperatureChange: handleTemperatureChange,
+      controlState: controlState,
     };
 
     if (result?.target === "t1") {
@@ -102,19 +124,26 @@ export default function Lussac() {
   return (
     <div className="flex items-center w-full justify-center h-[95%] relative">
       <div className="absolute top-4 z-10 left-2">
-        <GasLawInputGroup
-          lawType="gayLussac"
-          values={values}
-          units={units}
-          onValueChange={handleValueChange}
-          onUnitChange={handleUnitChange}
-          disabledFields={[
-            "v",
-            "n",
-            ...(result?.target ? [result.target] : []),
-          ]}
-        />
-        <CollissionCounter />
+        <div className="space-y-2">
+          <SimulationControlSelector
+            gasLaw="gayLussac"
+            controlState={controlState}
+            onControlStateChange={handleControlStateChange}
+          />
+          <GasLawInputGroup
+            lawType="gayLussac"
+            values={values}
+            units={units}
+            onValueChange={handleValueChange}
+            onUnitChange={handleUnitChange}
+            disabledFields={[
+              "v",
+              "n",
+              ...(result?.target ? [result.target] : []),
+            ]}
+          />
+          <CollissionCounter />
+        </div>
       </div>
       <div className="absolute top-4 z-10 right-2 flex items-end flex-col gap-2">
         <InfoSheet {...LUSSAC_LAW_INFO} />
