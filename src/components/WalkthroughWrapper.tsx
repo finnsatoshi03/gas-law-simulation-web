@@ -1,7 +1,8 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import Joyride, { CallBackProps, EVENTS } from "react-joyride";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useWalkthrough } from "@/contexts/WalkthroughProvider";
+import { useAccessibility } from "@/contexts/AccessibilityProvider";
 import { getTourSteps } from "@/lib/walkthrough-steps";
 
 export default function WalkthroughWrapper({
@@ -13,9 +14,15 @@ export default function WalkthroughWrapper({
     setState,
     state: { run, stepIndex, steps, tourActive },
     setUiState,
+    speakStepContent,
+    stopSpeaking,
   } = useWalkthrough();
+  const { settings: accessibilitySettings } = useAccessibility();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Track the last spoken step to prevent duplicates
+  const lastSpokenStepRef = useRef<number>(-1);
 
   useEffect(() => {
     const tourSteps = getTourSteps();
@@ -38,14 +45,22 @@ export default function WalkthroughWrapper({
     }
   }, [location.pathname, steps, tourActive, setState]);
 
+  // Reset step tracking when the step index changes
+  useEffect(() => {
+    // Reset the tracking when we move to a different step
+    lastSpokenStepRef.current = -1;
+  }, [stepIndex]);
+
   const handleCallback = (data: CallBackProps) => {
-    const { index, step: { data: stepData } = {}, type, action } = data;
+    const { index, step: { data: stepData } = {}, step, type, action } = data;
 
     const isUnitSelectorStep =
       stepData?.current === ".input-unit-pressure-1-selector" ||
       stepData?.current === ".input-unit-pressure-1-selector-content";
 
     if (type === EVENTS.STEP_AFTER) {
+      // Remove the speech call from here to avoid duplication
+
       if (isUnitSelectorStep) {
         const selectTrigger = document.querySelector(
           '.input-unit-pressure-1-selector [role="combobox"]'
@@ -111,6 +126,9 @@ export default function WalkthroughWrapper({
       }
 
       if (action === "prev" && stepData?.previous) {
+        // Stop current speech when navigating
+        stopSpeaking();
+
         // Handle previous navigation
         if (
           typeof stepData.previous === "string" &&
@@ -123,6 +141,9 @@ export default function WalkthroughWrapper({
           stepIndex: index - 1,
         });
       } else if (stepData?.next) {
+        // Stop current speech when navigating
+        stopSpeaking();
+
         // Handle next navigation
         if (
           typeof stepData.next === "string" &&
@@ -144,7 +165,24 @@ export default function WalkthroughWrapper({
           });
         }
       }
-    } else if (type === EVENTS.TOUR_END) {
+    } else if (type === EVENTS.TOOLTIP) {
+      if (accessibilitySettings.autoReadWalkthrough && step) {
+        // Always allow speech for different step indices
+        if (lastSpokenStepRef.current !== index) {
+          stopSpeaking();
+
+          lastSpokenStepRef.current = index;
+
+          setTimeout(() => {
+            speakStepContent(step);
+          }, 200);
+        }
+      }
+    } else if (type === EVENTS.TOUR_END || action === "skip") {
+      // Stop speech when tour ends or is skipped
+      stopSpeaking();
+      // Reset step tracking
+      lastSpokenStepRef.current = -1;
       setState({
         run: false,
         stepIndex: 0,
@@ -171,6 +209,14 @@ export default function WalkthroughWrapper({
         showProgress
         showSkipButton
         disableScrolling
+        locale={{
+          skip: accessibilitySettings.isTextToSpeechEnabled
+            ? "Skip & Stop Speech"
+            : "Skip",
+          last: "Finish",
+          next: "Next",
+          back: "Back",
+        }}
       />
       {children}
     </>

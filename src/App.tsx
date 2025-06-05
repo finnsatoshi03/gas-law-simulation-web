@@ -11,6 +11,7 @@ import { GasLawProvider } from "./contexts/GasLawProvider";
 import { WallCollisionProvider } from "./contexts/WallCollissionProvider";
 import { AuthProvider } from "./contexts/AuthContext";
 import { SimulationSettingsProvider } from "./contexts/SettingsProvider";
+import { AccessibilityProvider } from "./contexts/AccessibilityProvider";
 
 import { DocsLayout } from "./layout/DocsLayout";
 import AppLayout from "./layout/AppLayout";
@@ -96,17 +97,19 @@ const AnimatedRoutes = () => {
 export default function App() {
   return (
     <AuthProvider>
-      <WalkthroughProvider>
-        <GasLawProvider>
-          <WallCollisionProvider>
-            <SimulationSettingsProvider>
-              <HashRouter>
-                <AnimatedRoutes />
-              </HashRouter>
-            </SimulationSettingsProvider>
-          </WallCollisionProvider>
-        </GasLawProvider>
-      </WalkthroughProvider>
+      <AccessibilityProvider>
+        <WalkthroughProvider>
+          <GasLawProvider>
+            <WallCollisionProvider>
+              <SimulationSettingsProvider>
+                <HashRouter>
+                  <AnimatedRoutes />
+                </HashRouter>
+              </SimulationSettingsProvider>
+            </WallCollisionProvider>
+          </GasLawProvider>
+        </WalkthroughProvider>
+      </AccessibilityProvider>
     </AuthProvider>
   );
 }

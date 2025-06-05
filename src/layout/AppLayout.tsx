@@ -5,6 +5,7 @@ import { AppSidebar } from "./AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import WalkthroughWrapper from "@/components/WalkthroughWrapper";
+import { AccessibilityButton } from "@/components/AccessibilityButton";
 
 export default function AppLayout() {
   return (
@@ -13,9 +14,10 @@ export default function AppLayout() {
         <WalkthroughWrapper />
         <AppSidebar />
         <main className="p-4 w-full">
-          <SidebarTrigger className="relative z-50"/>
+          <SidebarTrigger className="relative z-50" />
           <Outlet />
         </main>
+        <AccessibilityButton />
       </TooltipProvider>
     </SidebarProvider>
   );

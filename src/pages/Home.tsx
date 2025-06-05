@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/tooltip";
 import { ExitDialog } from "@/components/ExitDialog";
 import { Button } from "@/components/ui/button";
+import { AccessibilityButton } from "@/components/AccessibilityButton";
 import { useWalkthrough } from "@/contexts/WalkthroughProvider";
 
 interface MoleculeType {
@@ -611,6 +612,8 @@ export default function Home() {
         setRememberChoice={setRememberChoice}
         closeApp={closeApp}
       />
+
+      <AccessibilityButton />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import SimulationSettings from "./SimulationSettings";
 import About from "./About";
 import SampleProblems from "./SampleProblems";
+import { AccessibilityControls } from "@/components/AccessibilityControls";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("settings");
@@ -13,6 +14,8 @@ const Settings = () => {
     switch (activeTab) {
       case "settings":
         return "Simulation Settings: Customize Your Gas Law Experiment";
+      case "accessibility":
+        return "Accessibility Settings: Customize Your Learning Experience";
       case "about":
         return "About Gas Law Simulator: Understanding the Fundamentals";
       case "problems":
@@ -31,14 +34,19 @@ const Settings = () => {
       >
         <h1 className="text-2xl font-bold mb-8">{getHeaderText()}</h1>
 
-        <TabsList className="grid max-w-xl grid-cols-3 mb-8">
+        <TabsList className="grid max-w-xl grid-cols-4 mb-8">
           <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="accessibility">Accessibility</TabsTrigger>
           <TabsTrigger value="problems">Sample Problems</TabsTrigger>
           <TabsTrigger value="about">About</TabsTrigger>
         </TabsList>
 
         <TabsContent value="settings">
           <SimulationSettings />
+        </TabsContent>
+
+        <TabsContent value="accessibility">
+          <AccessibilityControls />
         </TabsContent>
 
         <TabsContent value="problems">
