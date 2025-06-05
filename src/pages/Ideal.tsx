@@ -35,11 +35,7 @@ export default function Ideal() {
     pump: "initial",
   });
 
-  const handleSimulationVolumeChange = (
-    volume: number,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    target: "initial" | "final"
-  ) => {
+  const handleSimulationVolumeChange = (volume: number) => {
     // Round to 2 decimal places for better UX
     const roundedVolume = Math.round(volume * 100) / 100;
 
@@ -49,11 +45,7 @@ export default function Ideal() {
     }
   };
 
-  const handleSimulationPressureChange = (
-    pressure: number,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    target: "initial" | "final"
-  ) => {
+  const handleSimulationPressureChange = (pressure: number) => {
     // Round to 2 decimal places for better UX
     const roundedPressure = Math.round(pressure * 100) / 100;
 
@@ -64,11 +56,7 @@ export default function Ideal() {
     }
   };
 
-  const handleTemperatureChange = (
-    temperature: number,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    target: "initial" | "final"
-  ) => {
+  const handleTemperatureChange = (temperature: number) => {
     // Round to 1 decimal place for better UX
     const roundedTemp = Math.round(temperature * 10) / 10;
 
