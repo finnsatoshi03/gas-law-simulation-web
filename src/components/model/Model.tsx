@@ -829,6 +829,7 @@ const GasLawsSimulation: React.FC<Props> = ({
                 y={isMobile ? "250" : "760"}
                 width="50"
                 height="50"
+                className="z-50 relative"
               >
                 <Button
                   onClick={togglePlayPause}
