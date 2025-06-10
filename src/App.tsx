@@ -31,6 +31,7 @@ import Docs_WallDynamics from "./pages/docs/Docs_WallDynamics";
 import Docs_SampleProblems from "./pages/docs/Docs_SampleProblems";
 import Docs_Solution from "./pages/docs/Docs_Solution";
 import Docs_Settings from "./pages/docs/Docs_Settings";
+import Docs_Accessibility from "./pages/docs/Docs_Accessibility";
 
 import { Login } from "./components/auth/Login";
 // import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -77,6 +78,7 @@ const AnimatedRoutes = () => {
           />
           <Route path="docs/solution" element={<Docs_Solution />} />
           <Route path="docs/settings" element={<Docs_Settings />} />
+          <Route path="docs/accessibility" element={<Docs_Accessibility />} />
         </Route>
 
         <Route element={<AppLayout />}>

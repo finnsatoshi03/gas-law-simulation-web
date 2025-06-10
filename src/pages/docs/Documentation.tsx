@@ -43,7 +43,7 @@ export default function Documentation() {
 
             <p className="text-sm md:text-base">Gas Law Simulations</p>
             <p className="text-sm md:text-base">
-              Explore Boyle’s Law, Charles’ Law, and the Ideal Gas Law
+              Explore Boyle's Law, Charles' Law, and the Ideal Gas Law
               interactively. Adjust pressure, volume, and temperature to see
               real-time results with visual representations that reinforce key
               concepts.
@@ -124,6 +124,14 @@ export default function Documentation() {
               Delete stored calculations for a fresh start and optimized
               storage.
             </p>
+            <Separator className=" col-span-2" />
+
+            <p className="text-sm md:text-base">Accessibility Features</p>
+            <p className="text-sm md:text-base">
+              Built-in text-to-speech, voice customization, and auto-read
+              capabilities make the simulation accessible to all users,
+              including those with visual impairments or learning disabilities.
+            </p>
           </div>
         </DocumentationSection>
 
@@ -136,7 +144,7 @@ export default function Documentation() {
             <Link to="#" className="text-blue-700 inline-flex font-semibold">
               Navigation & User Interface <ArrowUpRight size={12} />
             </Link>
-            , where you’ll learn how to move through the app efficiently. The{" "}
+            , where you'll learn how to move through the app efficiently. The{" "}
             <Link to="#" className="text-blue-700 inline-flex font-semibold">
               App Features <ArrowUpRight size={12} />
             </Link>{" "}
@@ -151,6 +159,17 @@ export default function Documentation() {
               Tips & Best Practices <ArrowUpRight size={12} />
             </Link>{" "}
             provide guidance on maximizing your experience with the app.
+            <p className="mt-4">
+              Don't miss our{" "}
+              <Link
+                to="/docs/accessibility"
+                className="text-blue-700 inline-flex font-semibold"
+              >
+                Accessibility Features <ArrowUpRight size={12} />
+              </Link>{" "}
+              section to learn about text-to-speech and other tools that make
+              the simulation accessible to all users.
+            </p>
           </div>
         </DocumentationSection>
 

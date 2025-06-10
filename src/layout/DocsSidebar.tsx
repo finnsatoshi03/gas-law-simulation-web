@@ -178,6 +178,32 @@ const data = {
       ],
     },
     {
+      title: "Accessibility",
+      url: "/docs/accessibility#",
+      items: [
+        {
+          title: "Accessibility Features",
+          url: "/docs/accessibility#accessibility-overview",
+        },
+        {
+          title: "Accessibility Button",
+          url: "/docs/accessibility#accessibility-button",
+        },
+        {
+          title: "Text-to-Speech Functionality",
+          url: "/docs/accessibility#text-to-speech",
+        },
+        {
+          title: "Voice Customization",
+          url: "/docs/accessibility#voice-settings",
+        },
+        {
+          title: "Auto-Read Walkthrough",
+          url: "/docs/accessibility#auto-read",
+        },
+      ],
+    },
+    {
       title: "Settings",
       url: "/docs/settings#",
       items: [
