@@ -38,6 +38,7 @@ interface SimulationControlSelectorProps {
     valueType: ValueType
   ) => void;
   className?: string;
+  calculatedResult?: { target: string; value: string } | null;
 }
 
 const CONTROL_CONFIGS = {
@@ -86,11 +87,20 @@ const getAvailableControls = (gasLaw: string): ControlType[] => {
   }
 };
 
+const mapVariableToControlType = (varId: string): ControlType | null => {
+  if (varId.startsWith("v")) return "volume";
+  if (varId.startsWith("t")) return "temperature";
+  if (varId.startsWith("p")) return "pressure";
+  if (varId.startsWith("n")) return "pump";
+  return null;
+};
+
 const SimulationControlSelector: React.FC<SimulationControlSelectorProps> = ({
   gasLaw,
   controlState,
   onControlStateChange,
   className,
+  calculatedResult,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const availableControls = getAvailableControls(gasLaw);
@@ -112,6 +122,23 @@ const SimulationControlSelector: React.FC<SimulationControlSelectorProps> = ({
     return valueType === "initial"
       ? "bg-blue-100 text-blue-800"
       : "bg-orange-100 text-orange-800";
+  };
+
+  const isControlDisabled = (controlType: ControlType) => {
+    if (!calculatedResult?.target) return false;
+
+    const calculatedControlType = mapVariableToControlType(
+      calculatedResult.target
+    );
+
+    if (controlType === calculatedControlType) {
+      console.log(
+        `Control ${controlType} matches calculated type for ${calculatedResult.target}`
+      );
+      return true;
+    }
+
+    return false;
   };
 
   return (
@@ -159,6 +186,7 @@ const SimulationControlSelector: React.FC<SimulationControlSelectorProps> = ({
               const config = CONTROL_CONFIGS[controlType];
               const Icon = config.icon;
               const currentValue = controlState[controlType];
+              const isDisabled = isControlDisabled(controlType);
 
               return (
                 <div
@@ -175,6 +203,11 @@ const SimulationControlSelector: React.FC<SimulationControlSelectorProps> = ({
                       <div className="font-medium text-sm">{config.label}</div>
                       <div className="text-xs text-muted-foreground">
                         {config.description}
+                        {isDisabled && (
+                          <span className="ml-1 text-blue-500">
+                            (Locked due to calculated value)
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -198,6 +231,7 @@ const SimulationControlSelector: React.FC<SimulationControlSelectorProps> = ({
                         onClick={() =>
                           handleControlChange(controlType, "initial")
                         }
+                        disabled={isDisabled}
                       >
                         Initial
                       </Button>
@@ -208,6 +242,7 @@ const SimulationControlSelector: React.FC<SimulationControlSelectorProps> = ({
                         onClick={() =>
                           handleControlChange(controlType, "final")
                         }
+                        disabled={isDisabled}
                       >
                         Final
                       </Button>

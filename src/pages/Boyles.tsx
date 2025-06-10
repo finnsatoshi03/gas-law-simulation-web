@@ -112,7 +112,7 @@ export default function BoylesLaw() {
       props.finalPressure = parseFloat(result.value) || 0;
     }
     return props;
-  }, [result, values, units]);
+  }, [result, values, units, controlState]);
 
   const handleValueChange = (id: string, value: string) => {
     setValues((prev) => ({ ...prev, [id]: value }));
@@ -130,6 +130,7 @@ export default function BoylesLaw() {
             gasLaw="boyles"
             controlState={controlState}
             onControlStateChange={handleControlStateChange}
+            calculatedResult={result}
           />
           <GasLawInputGroup
             lawType="boyles"
@@ -143,6 +144,8 @@ export default function BoylesLaw() {
               ...(result?.target ? [result.target] : []),
             ]}
             className="boyles-law-input-group"
+            onControlStateChange={handleControlStateChange}
+            controlState={controlState}
           />
           <CollissionCounter />
         </div>

@@ -140,7 +140,7 @@ export default function Combined() {
     }
 
     return props;
-  }, [result, values, units]);
+  }, [result, values, units, controlState]);
 
   const handleValueChange = (id: string, value: string) => {
     setValues((prev) => ({ ...prev, [id]: value }));
@@ -158,6 +158,7 @@ export default function Combined() {
             gasLaw="combined"
             controlState={controlState}
             onControlStateChange={handleControlStateChange}
+            calculatedResult={result}
           />
           <GasLawInputGroup
             lawType="combined"
@@ -166,6 +167,8 @@ export default function Combined() {
             onValueChange={handleValueChange}
             onUnitChange={handleUnitChange}
             disabledFields={["n", ...(result?.target ? [result.target] : [])]}
+            onControlStateChange={handleControlStateChange}
+            controlState={controlState}
           />
           <CollissionCounter />
         </div>

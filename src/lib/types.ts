@@ -1,4 +1,8 @@
 import { GAS_LAW_CONFIGS, UNITS } from "@/components/model/Parameters";
+import {
+  ControlType,
+  ValueType,
+} from "@/components/model/SimulationControlSelector";
 
 export interface CalculatedValue {
   target: string;
@@ -75,6 +79,11 @@ export interface GasLawInputGroupProps {
   onValueChange: (id: string, value: string) => void;
   onUnitChange: (id: string, unit: string) => void;
   className?: string;
+  onControlStateChange?: (
+    controlType: ControlType,
+    valueType: ValueType
+  ) => void;
+  controlState?: Record<ControlType, ValueType>;
 }
 
 export type GasLawType =

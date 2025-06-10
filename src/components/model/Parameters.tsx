@@ -5,8 +5,8 @@ import Draggable, { DraggableEvent } from "react-draggable";
 
 import {
   GasLawConfig,
-  GasLawInputGroupProps,
   GasLawInputProps,
+  GasLawInputGroupProps,
   UnitTypes,
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -340,6 +340,8 @@ const GasLawInputGroup: React.FC<GasLawInputGroupProps> = ({
   onValueChange,
   onUnitChange,
   className,
+  onControlStateChange,
+  controlState,
 }) => {
   const isMobile = useIsMobile();
   const [isMinimized, setIsMinimized] = useState(false);
@@ -350,6 +352,42 @@ const GasLawInputGroup: React.FC<GasLawInputGroupProps> = ({
   const { result, calculateResult, clearResult } = useGasLaw();
 
   const config = GAS_LAW_CONFIGS[lawType];
+
+  // Helper function to map variable ID to control type
+  const mapVariableToControlType = (varId: string) => {
+    if (varId.startsWith("v")) return "volume" as const;
+    if (varId.startsWith("t")) return "temperature" as const;
+    if (varId.startsWith("p")) return "pressure" as const;
+    if (varId.startsWith("n")) return "pump" as const;
+    return null;
+  };
+
+  // Helper function to determine if a variable is initial or final
+  const getValueType = (varId: string): "initial" | "final" => {
+    // Variables ending with 1 are initial, 2 are final
+    // For ideal gas law, all variables are considered as having a single state
+    if (lawType === "ideal") return "initial";
+    return varId.endsWith("1") ? "initial" : "final";
+  };
+
+  // Sync control state when result changes
+  useEffect(() => {
+    // Only update if we have both a result and the onControlStateChange function
+    if (result?.target && onControlStateChange && controlState) {
+      const controlType = mapVariableToControlType(result.target);
+      if (controlType) {
+        // If the calculated value is for an initial parameter, set control to final and vice versa
+        const calculatedValueType = getValueType(result.target);
+        const oppositeValueType =
+          calculatedValueType === "initial" ? "final" : "initial";
+
+        // Only update if the current control state is different
+        if (controlState[controlType] !== oppositeValueType) {
+          onControlStateChange(controlType, oppositeValueType);
+        }
+      }
+    }
+  }, [result, onControlStateChange, controlState]);
 
   useEffect(() => {
     // Define required count based on gas law type

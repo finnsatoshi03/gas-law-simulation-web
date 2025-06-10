@@ -94,7 +94,7 @@ export default function Avogadros() {
       props.moleculeCount = parseFloat(result.value) || 0;
     }
     return props;
-  }, [result, values, units]);
+  }, [result, values, units, controlState]);
 
   const handleValueChange = (id: string, value: string) => {
     setValues((prev) => ({ ...prev, [id]: value }));
@@ -112,6 +112,7 @@ export default function Avogadros() {
             gasLaw="avogadro"
             controlState={controlState}
             onControlStateChange={handleControlStateChange}
+            calculatedResult={result}
           />
           <GasLawInputGroup
             lawType="avogadro"
@@ -120,6 +121,8 @@ export default function Avogadros() {
             onValueChange={handleValueChange}
             onUnitChange={handleUnitChange}
             disabledFields={result?.target ? [result.target] : []}
+            onControlStateChange={handleControlStateChange}
+            controlState={controlState}
           />
           <CollissionCounter />
         </div>

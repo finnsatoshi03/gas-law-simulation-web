@@ -87,13 +87,13 @@ export default function Ideal() {
   const simulationProps = useMemo(() => {
     const props: any = {
       gasLaw: "ideal",
-      finalPressure: parseFloat(values.p) || 0,
-      finalVolume: parseFloat(values.v) || 0,
-      finalTemperature: parseFloat(values.t) || 0,
-      moleculeCount: parseFloat(values.n) || 0,
-      pressureUnit: units.p,
+      volume: parseFloat(values.v) || 0,
       volumeUnit: units.v,
+      temperature: parseFloat(values.t) || 0,
       temperatureUnit: units.t,
+      pressure: parseFloat(values.p) || 0,
+      pressureUnit: units.p,
+      moleculeCount: parseFloat(values.n) || 0,
       onVolumeChange: handleSimulationVolumeChange,
       onPressureChange: handleSimulationPressureChange,
       onTemperatureChange: handleTemperatureChange,
@@ -101,26 +101,19 @@ export default function Ideal() {
       controlState: controlState,
     };
 
-    // Handle calculated values from gas law context
-    if (result?.target) {
-      switch (result.target) {
-        case "p":
-          props.finalPressure = parseFloat(result.value) || 0;
-          break;
-        case "v":
-          props.finalVolume = parseFloat(result.value) || 0;
-          break;
-        case "n":
-          props.moleculeCount = parseFloat(result.value) || 0;
-          break;
-        case "t":
-          props.finalTemperature = parseFloat(result.value) || 0;
-          break;
-      }
+    // Update with calculation results if available
+    if (result?.target === "v") {
+      props.volume = parseFloat(result.value) || 0;
+    } else if (result?.target === "p") {
+      props.pressure = parseFloat(result.value) || 0;
+    } else if (result?.target === "t") {
+      props.temperature = parseFloat(result.value) || 0;
+    } else if (result?.target === "n") {
+      props.moleculeCount = parseFloat(result.value) || 0;
     }
 
     return props;
-  }, [result, values, units]);
+  }, [result, values, units, controlState]);
 
   const handleValueChange = (id: string, value: string) => {
     setValues((prev) => ({ ...prev, [id]: value }));
@@ -138,6 +131,7 @@ export default function Ideal() {
             gasLaw="ideal"
             controlState={controlState}
             onControlStateChange={handleControlStateChange}
+            calculatedResult={result}
           />
           <GasLawInputGroup
             lawType="ideal"
@@ -146,6 +140,8 @@ export default function Ideal() {
             onValueChange={handleValueChange}
             onUnitChange={handleUnitChange}
             disabledFields={result?.target ? [result.target] : []}
+            onControlStateChange={handleControlStateChange}
+            controlState={controlState}
           />
           <CollissionCounter />
         </div>

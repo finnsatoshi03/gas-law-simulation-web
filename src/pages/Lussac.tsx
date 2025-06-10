@@ -111,7 +111,7 @@ export default function Lussac() {
       props.finalPressure = parseFloat(result.value) || 0;
     }
     return props;
-  }, [result, values, units]);
+  }, [result, values, units, controlState]);
 
   const handleValueChange = (id: string, value: string) => {
     setValues((prev) => ({ ...prev, [id]: value }));
@@ -129,6 +129,7 @@ export default function Lussac() {
             gasLaw="gayLussac"
             controlState={controlState}
             onControlStateChange={handleControlStateChange}
+            calculatedResult={result}
           />
           <GasLawInputGroup
             lawType="gayLussac"
@@ -141,6 +142,8 @@ export default function Lussac() {
               "n",
               ...(result?.target ? [result.target] : []),
             ]}
+            onControlStateChange={handleControlStateChange}
+            controlState={controlState}
           />
           <CollissionCounter />
         </div>

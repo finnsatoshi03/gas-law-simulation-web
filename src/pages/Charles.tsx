@@ -61,7 +61,7 @@ export default function Charles() {
     // Round to 1 decimal place for better UX
     const roundedTemp = Math.round(temperature * 10) / 10;
 
-    // Update based on the target parameter from control state
+    // Update based on the target parameter
     if (target === "initial") {
       setValues((prev) => ({ ...prev, t1: roundedTemp.toString() }));
     } else {
@@ -80,49 +80,34 @@ export default function Charles() {
   };
 
   const simulationProps = useMemo(() => {
+    // Create simulation props object
     const props: any = {
       gasLaw: "charles",
       initialVolume: parseFloat(values.v1) || 0,
       finalVolume: parseFloat(values.v2) || 0,
       volumeUnit: units.v1,
-      moleculeCount: 0,
+      initialTemperature: parseFloat(values.t1) || 0,
+      finalTemperature: parseFloat(values.t2) || 0,
       temperatureUnit: units.t1,
-      finalPressure: 0,
-      pressureUnit: units.p,
+      moleculeCount: 0,
       onVolumeChange: handleSimulationVolumeChange,
       onTemperatureChange: handleTemperatureChange,
       controlState: controlState,
     };
 
+    // Update with calculation results if available
     if (result?.target === "v1") {
       props.initialVolume = parseFloat(result.value) || 0;
-      props.finalVolume = parseFloat(values.v2) || 0;
-      props.initialTemperature = parseFloat(values.t1) || 295;
-      props.finalTemperature = parseFloat(values.t2) || 295;
     } else if (result?.target === "v2") {
-      props.initialVolume = parseFloat(values.v1) || 0;
       props.finalVolume = parseFloat(result.value) || 0;
-      props.initialTemperature = parseFloat(values.t1) || 295;
-      props.finalTemperature = parseFloat(values.t2) || 295;
     } else if (result?.target === "t1") {
-      props.initialVolume = parseFloat(values.v1) || 0;
-      props.finalVolume = parseFloat(values.v2) || 0;
-      props.initialTemperature = parseFloat(result.value) || 295;
-      props.finalTemperature = parseFloat(values.t2) || 295;
+      props.initialTemperature = parseFloat(result.value) || 0;
     } else if (result?.target === "t2") {
-      props.initialVolume = parseFloat(values.v1) || 0;
-      props.finalVolume = parseFloat(values.v2) || 0;
-      props.initialTemperature = parseFloat(values.t1) || 295;
-      props.finalTemperature = parseFloat(result.value) || 295;
-    } else {
-      props.initialVolume = parseFloat(values.v1) || 0;
-      props.finalVolume = parseFloat(values.v2) || 0;
-      props.initialTemperature = parseFloat(values.t1) || 295;
-      props.finalTemperature = parseFloat(values.t2) || 295;
+      props.finalTemperature = parseFloat(result.value) || 0;
     }
 
     return props;
-  }, [result, values, units]);
+  }, [result, values, units, controlState]);
 
   const handleValueChange = (id: string, value: string) => {
     setValues((prev) => ({ ...prev, [id]: value }));
@@ -140,6 +125,7 @@ export default function Charles() {
             gasLaw="charles"
             controlState={controlState}
             onControlStateChange={handleControlStateChange}
+            calculatedResult={result}
           />
           <GasLawInputGroup
             lawType="charles"
@@ -152,6 +138,8 @@ export default function Charles() {
               "p",
               ...(result?.target ? [result.target] : []),
             ]}
+            onControlStateChange={handleControlStateChange}
+            controlState={controlState}
           />
           <CollissionCounter />
         </div>
