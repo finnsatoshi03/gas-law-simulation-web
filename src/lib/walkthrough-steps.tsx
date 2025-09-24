@@ -437,7 +437,8 @@ export const getTourSteps = () => {
       data: {
         previous: ".calculation-history-content",
         current: ".clear-history-button",
-        next: "collision-counter",
+        next: ".collision-counter",
+        closeHistoryOnNext: true,
       },
       disableBeacon: true,
       placement: "auto" as Placement,
@@ -484,8 +485,8 @@ export const getTourSteps = () => {
         </div>
       ),
       data: {
-        previous: ".input-unit-pressure-1-selector-content",
-        next: ".boyles-simulation",
+        previous: ".clear-history-button",
+        next: ".info-sheet-button",
       },
       disableBeacon: true,
       placement: "auto" as const,
@@ -1013,10 +1014,66 @@ export const getTourSteps = () => {
       ),
       data: {
         previous: ".simulation-play-pause",
-        next: ".simulation-reset",
+        next: ".boyles-simulation",
       },
       disableBeacon: true,
       placement: "auto" as Placement,
+    },
+    {
+      target: ".boyles-simulation",
+      content: (
+        <div>
+          <h3 className="font-bold text-lg">🎉 Walkthrough Complete!</h3>
+          <p>
+            Congratulations! You've successfully completed the gas law
+            simulation walkthrough. You now have all the knowledge you need to
+            explore and experiment!
+          </p>
+
+          <div className="mt-3 bg-gradient-to-r from-blue-50 to-green-50 p-3 text-sm rounded-md border border-blue-200">
+            <strong>🚀 Ready to Explore:</strong>
+            <ul className="list-disc pl-5 mt-2">
+              <li>
+                <strong>Experiment</strong> with different gas combinations
+              </li>
+              <li>
+                <strong>Adjust</strong> temperature, pressure, and volume
+              </li>
+              <li>
+                <strong>Observe</strong> how molecules behave in real-time
+              </li>
+              <li>
+                <strong>Practice</strong> with the problem sets
+              </li>
+              <li>
+                <strong>Track</strong> your calculations in the history
+              </li>
+            </ul>
+          </div>
+
+          <div className="mt-3 bg-yellow-50 p-3 text-sm rounded-md border border-yellow-200">
+            <strong>💡 Pro Tips:</strong>
+            <ul className="list-disc pl-5 mt-1">
+              <li>Try extreme values to see dramatic changes</li>
+              <li>Compare different gas laws side by side</li>
+              <li>Use the collision counter to understand pressure</li>
+              <li>Don't forget to save interesting calculations!</li>
+            </ul>
+          </div>
+
+          <div className="mt-3 bg-green-50 p-3 text-sm rounded-md border border-green-200 text-center">
+            <strong>🌟 The world of gas laws awaits your discovery!</strong>
+            <p className="mt-1 text-xs">
+              Click "Finish" to start your journey!
+            </p>
+          </div>
+        </div>
+      ),
+      data: {
+        previous: ".simulation-clear-molecules",
+      },
+      disableBeacon: true,
+      placement: "center" as Placement,
     },
   ];
 

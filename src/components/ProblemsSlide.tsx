@@ -118,11 +118,18 @@ export default function ProblemsSlide({
     setFontSize((prev) => Math.max(prev - 2, 12));
   };
 
-  if (problems.length === 0) {
+  if (problems.length === 0 && !isWalkthroughActive) {
     return null;
   }
 
-  const currentProblem: Problem = problems[currentIndex];
+  const currentProblem: Problem = problems[currentIndex] || {
+    id: "walkthrough-dummy",
+    type,
+    title: "Sample Problem",
+    question: "This is a sample problem for the walkthrough demonstration.",
+    hint: "This is a sample hint.",
+    solution: "This is a sample solution.",
+  };
 
   const getGasLawTitle = (type: Problem["type"]) => {
     switch (type) {
@@ -178,7 +185,9 @@ export default function ProblemsSlide({
                 {getGasLawTitle(type)}
               </CardTitle>
               <p className="text-xs md:text-sm text-gray-500">
-                Problem {currentIndex + 1} of {problems.length}
+                {problems.length === 0
+                  ? "Sample Problem (Walkthrough)"
+                  : `Problem ${currentIndex + 1} of ${problems.length}`}
               </p>
             </div>
             <div className="flex gap-2 items-center">
@@ -209,6 +218,7 @@ export default function ProblemsSlide({
                   variant="ghost"
                   size="sm"
                   onClick={handlePrevious}
+                  disabled={problems.length === 0}
                   className="p-1 h-8 w-8"
                 >
                   <ChevronLeft className="h-5 w-5" />
@@ -217,6 +227,7 @@ export default function ProblemsSlide({
                   variant="ghost"
                   size="sm"
                   onClick={handleNext}
+                  disabled={problems.length === 0}
                   className="p-1 h-8 w-8"
                 >
                   <ChevronRight className="h-5 w-5" />

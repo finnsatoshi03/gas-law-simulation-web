@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { GAS_LAWS } from "@/lib/constants";
@@ -14,6 +14,7 @@ import { ExitDialog } from "@/components/ExitDialog";
 import { Button } from "@/components/ui/button";
 import { AccessibilityButton } from "@/components/AccessibilityButton";
 import { useWalkthrough } from "@/contexts/WalkthroughProvider";
+import TourResumeDialog from "@/components/TourResumeDialog";
 
 interface MoleculeType {
   type: string;
@@ -84,12 +85,24 @@ const CONTAINER_PADDING = 30;
 const BASE_TEMPERATURE = 293;
 
 export default function Home() {
-  const { setState } = useWalkthrough();
+  const navigate = useNavigate();
+  const {
+    setState,
+    getStoredProgress,
+    startTour,
+    getRouteForStep,
+    state: { steps },
+  } = useWalkthrough();
 
   const [molecules, setMolecules] = useState<Molecule[]>([]);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
 
   const [activeIndex, setActiveIndex] = useState(0);
+  const [showResumeDialog, setShowResumeDialog] = useState(false);
+  const [storedProgress, setStoredProgress] = useState<{
+    stepIndex: number;
+    timestamp: number;
+  } | null>(null);
   const [isTouching, setIsTouching] = useState(false);
   const [touchStart, setTouchStart] = useState(0);
 
@@ -190,11 +203,56 @@ export default function Home() {
   }, [containerSize]);
 
   const handleStartTour = () => {
-    setState({
-      run: true,
-      tourActive: true,
-      stepIndex: 0,
-    });
+    const progress = getStoredProgress();
+    if (progress && progress.stepIndex > 0) {
+      setStoredProgress(progress);
+      setShowResumeDialog(true);
+    } else {
+      startTour(true); // Force restart for fresh start
+    }
+  };
+
+  const handleResumeTour = () => {
+    setShowResumeDialog(false);
+    if (storedProgress) {
+      // Get the correct route for this step
+      const targetRoute = getRouteForStep(storedProgress.stepIndex);
+      console.log(
+        `Resuming tour at step ${storedProgress.stepIndex}, target route: ${targetRoute}`
+      );
+
+      // Navigate to the correct page first
+      if (targetRoute !== "/home") {
+        navigate(targetRoute);
+        // Wait for navigation, then start tour
+        setTimeout(() => {
+          setState({
+            run: true,
+            tourActive: true,
+            stepIndex: storedProgress.stepIndex,
+          });
+        }, 300);
+      } else {
+        // Already on home page, start immediately
+        setTimeout(() => {
+          setState({
+            run: true,
+            tourActive: true,
+            stepIndex: storedProgress.stepIndex,
+          });
+        }, 100);
+      }
+    }
+  };
+
+  const handleRestartTour = () => {
+    setShowResumeDialog(false);
+    startTour(true); // Force restart
+  };
+
+  const handleCancelTour = () => {
+    setShowResumeDialog(false);
+    setStoredProgress(null);
   };
 
   const handleCollision = (mol1: Molecule, mol2: Molecule): void => {
@@ -611,6 +669,16 @@ export default function Home() {
         rememberChoice={rememberChoice}
         setRememberChoice={setRememberChoice}
         closeApp={closeApp}
+      />
+
+      <TourResumeDialog
+        isOpen={showResumeDialog}
+        onResume={handleResumeTour}
+        onRestart={handleRestartTour}
+        onCancel={handleCancelTour}
+        stepIndex={storedProgress?.stepIndex || 0}
+        totalSteps={steps.length}
+        timestamp={storedProgress?.timestamp || Date.now()}
       />
 
       <AccessibilityButton />

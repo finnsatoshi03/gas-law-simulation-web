@@ -168,7 +168,7 @@ const CalculationHistoryDrawer: React.FC<CalculationHistoryDrawerProps> = ({
         <DrawerHeader>
           <DrawerTitle className="flex justify-between items-center">
             {formatLawType(lawType)} Calculation History
-            {filteredHistory.length > 0 && (
+            {(filteredHistory.length > 0 || isWalkthroughActive) && (
               <Button
                 variant="destructive"
                 size="sm"
@@ -183,6 +183,7 @@ const CalculationHistoryDrawer: React.FC<CalculationHistoryDrawerProps> = ({
                   clearHistory();
                 }}
                 className="clear-history-button"
+                disabled={filteredHistory.length === 0 && isWalkthroughActive}
               >
                 Clear History
               </Button>

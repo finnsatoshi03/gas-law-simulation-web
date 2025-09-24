@@ -17,6 +17,37 @@ interface WalkthroughState {
   };
 }
 
+const getStoredTourProgress = () => {
+  try {
+    const stored = localStorage.getItem("walkthrough-progress");
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+};
+
+const getRouteForStep = (stepIndex: number, steps: any[]) => {
+  if (stepIndex === 0) return "/home";
+
+  // Since step 0 goes to "/boyles", most steps after that are on boyles page
+  // unless we find a different route navigation
+  let currentRoute = "/boyles";
+
+  // Look forward from step 0 to current step to find the latest route
+  for (let i = 0; i <= stepIndex && i < steps.length; i++) {
+    const step = steps[i];
+    if (
+      step?.data?.next &&
+      typeof step.data.next === "string" &&
+      step.data.next.startsWith("/")
+    ) {
+      currentRoute = step.data.next;
+    }
+  }
+
+  return currentRoute;
+};
+
 const initialState: WalkthroughState = {
   run: false,
   stepIndex: 0,
@@ -32,6 +63,11 @@ interface WalkthroughContextType {
   getUiState: (componentId: string) => { [key: string]: any };
   speakStepContent: (step: Step) => void;
   stopSpeaking: () => void;
+  saveTourProgress: (currentStepIndex?: number) => void;
+  clearTourProgress: () => void;
+  getStoredProgress: () => { stepIndex: number; timestamp: number } | null;
+  startTour: (forceRestart?: boolean) => void;
+  getRouteForStep: (stepIndex: number) => string;
 }
 
 const WalkthroughContext = createContext<WalkthroughContextType | undefined>(
@@ -142,6 +178,57 @@ export function WalkthroughProvider({ children }: WalkthroughProviderProps) {
     stop();
   };
 
+  const saveTourProgress = (currentStepIndex?: number) => {
+    const stepToSave =
+      currentStepIndex !== undefined ? currentStepIndex : state.stepIndex;
+    if (state.tourActive && stepToSave > 0) {
+      const progress = {
+        stepIndex: stepToSave,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem("walkthrough-progress", JSON.stringify(progress));
+    }
+  };
+
+  const clearTourProgress = () => {
+    localStorage.removeItem("walkthrough-progress");
+  };
+
+  const getStoredProgress = () => {
+    return getStoredTourProgress();
+  };
+
+  const getRouteForStepFunc = (stepIndex: number) => {
+    return getRouteForStep(stepIndex, state.steps);
+  };
+
+  const startTour = (forceRestart = false) => {
+    if (forceRestart) {
+      clearTourProgress();
+      setState({
+        run: true,
+        stepIndex: 0,
+        tourActive: true,
+      });
+    } else {
+      const storedProgress = getStoredTourProgress();
+      if (storedProgress && storedProgress.stepIndex > 0) {
+        // We'll handle the resume/restart dialog in the UI component
+        setState({
+          run: true,
+          stepIndex: storedProgress.stepIndex,
+          tourActive: true,
+        });
+      } else {
+        setState({
+          run: true,
+          stepIndex: 0,
+          tourActive: true,
+        });
+      }
+    }
+  };
+
   const value = useMemo(
     () => ({
       state,
@@ -150,6 +237,11 @@ export function WalkthroughProvider({ children }: WalkthroughProviderProps) {
       getUiState,
       speakStepContent,
       stopSpeaking,
+      saveTourProgress,
+      clearTourProgress,
+      getStoredProgress,
+      startTour,
+      getRouteForStep: getRouteForStepFunc,
     }),
     [
       setState,

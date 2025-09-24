@@ -16,6 +16,8 @@ export default function WalkthroughWrapper({
     setUiState,
     speakStepContent,
     stopSpeaking,
+    saveTourProgress,
+    clearTourProgress,
   } = useWalkthrough();
   const { settings: accessibilitySettings } = useAccessibility();
   const navigate = useNavigate();
@@ -30,19 +32,8 @@ export default function WalkthroughWrapper({
   }, [setState]);
 
   useEffect(() => {
-    // Find the current step based on the current route
-    if (tourActive && steps.length > 0) {
-      const currentStepIndex = steps.findIndex(
-        (step) => step.data?.route === location.pathname
-      );
-
-      if (currentStepIndex !== -1) {
-        setState({
-          run: true,
-          stepIndex: currentStepIndex,
-        });
-      }
-    }
+    // Note: Route-based step finding removed as steps don't contain route data
+    // The walkthrough will progress naturally through user actions
   }, [location.pathname, steps, tourActive, setState]);
 
   // Reset step tracking when the step index changes
@@ -51,8 +42,19 @@ export default function WalkthroughWrapper({
     lastSpokenStepRef.current = -1;
   }, [stepIndex]);
 
+  // Monitor tour active state and force cleanup if needed
+  useEffect(() => {
+    if (!tourActive && run) {
+      console.log("Force stopping tour due to tourActive=false");
+      setState({ run: false });
+    }
+  }, [tourActive, run, setState]);
+
   const handleCallback = (data: CallBackProps) => {
     const { index, step: { data: stepData } = {}, step, type, action } = data;
+
+    // Debug logging for walkthrough issues (can be removed in production)
+    // console.log("Joyride callback:", { type, action, index, target: step?.target, stepData });
 
     const isUnitSelectorStep =
       stepData?.current === ".input-unit-pressure-1-selector" ||
@@ -86,10 +88,6 @@ export default function WalkthroughWrapper({
             showContent: true,
           });
         }, 500);
-      } else if (stepData?.current === ".clear-history-button") {
-        setUiState("calculation-history", {
-          isOpen: false,
-        });
       }
 
       if (stepData?.current === ".info-sheet-button") {
@@ -140,9 +138,36 @@ export default function WalkthroughWrapper({
           run: true,
           stepIndex: index - 1,
         });
-      } else if (stepData?.next) {
+      } else if (action === "next" && stepData?.next) {
         // Stop current speech when navigating
         stopSpeaking();
+
+        // Handle special case for closing history drawer
+        if (stepData?.closeHistoryOnNext) {
+          setUiState("calculation-history", {
+            isOpen: false,
+            showContent: false,
+          });
+          setUiState("collision-counter", { isMinimized: false });
+
+          // Wait for UI to update before proceeding
+          setTimeout(() => {
+            if (index < steps.length - 1) {
+              setState({
+                run: true,
+                stepIndex: index + 1,
+              });
+            } else {
+              // Tour completed
+              setState({
+                run: false,
+                stepIndex: 0,
+                tourActive: false,
+              });
+            }
+          }, 400);
+          return; // Exit early to prevent immediate navigation
+        }
 
         // Handle next navigation
         if (
@@ -151,18 +176,53 @@ export default function WalkthroughWrapper({
         ) {
           navigate(stepData.next);
         }
+
         if (index < steps.length - 1) {
+          const nextIndex = index + 1;
           setState({
             run: true,
-            stepIndex: index + 1,
+            stepIndex: nextIndex,
           });
+          // Save progress with the next step index
+          saveTourProgress(nextIndex);
         } else {
-          // Tour completed
-          setState({
-            run: false,
-            stepIndex: 0,
-            tourActive: false,
-          });
+          // Tour completed - this is the last step
+          stopSpeaking();
+          clearTourProgress();
+          // Use setTimeout to ensure proper cleanup
+          setTimeout(() => {
+            setState({
+              run: false,
+              stepIndex: 0,
+              tourActive: false,
+            });
+            // Force a second cleanup in case the first one doesn't work
+            setTimeout(() => {
+              if (run || tourActive) {
+                console.log(
+                  "Force cleanup: tour still active, forcing stop with aggressive cleanup"
+                );
+                // Aggressive cleanup approach
+                stopSpeaking();
+                clearTourProgress();
+                setState({
+                  run: false,
+                  stepIndex: 0,
+                  tourActive: false,
+                });
+                // Clear any timeouts or intervals that might be keeping the tour alive
+                lastSpokenStepRef.current = -1;
+
+                // Force remove any Joyride elements from DOM as last resort
+                setTimeout(() => {
+                  const joyrideElements = document.querySelectorAll(
+                    '[data-test-id="joyride"], .react-joyride__tooltip, .react-joyride__overlay'
+                  );
+                  joyrideElements.forEach((el) => el.remove());
+                }, 100);
+              }
+            }, 500);
+          }, 100);
         }
       }
     } else if (type === EVENTS.TOOLTIP) {
@@ -178,9 +238,57 @@ export default function WalkthroughWrapper({
           }, 200);
         }
       }
+    } else if (type === "error:target_not_found") {
+      // Handle target not found errors
+      console.warn("Target not found:", step?.target, "at index:", index);
+
+      // If it's the clear-history-button, try to proceed anyway after a delay
+      if (step?.target === ".clear-history-button") {
+        console.log(
+          "Attempting to recover from missing clear-history-button..."
+        );
+
+        // Ensure the calculation history is open so the button can render
+        setUiState("calculation-history", {
+          isOpen: true,
+          showContent: true,
+        });
+
+        // Wait a bit and try to continue
+        setTimeout(() => {
+          setState({
+            run: true,
+            stepIndex: index,
+          });
+        }, 500);
+      }
+
+      // If it's the problems-slide-button, try to proceed anyway after a delay
+      if (step?.target === ".problems-slide-button") {
+        console.log(
+          "Attempting to recover from missing problems-slide-button..."
+        );
+
+        // Force a re-render by updating the UI state
+        setUiState("problems-slide", { isExpanded: false });
+
+        // Wait a bit and try to continue
+        setTimeout(() => {
+          setState({
+            run: true,
+            stepIndex: index,
+          });
+        }, 500);
+      }
     } else if (type === EVENTS.TOUR_END || action === "skip") {
       // Stop speech when tour ends or is skipped
       stopSpeaking();
+      // Clear progress when tour is skipped or ended
+      if (action === "skip") {
+        saveTourProgress(index); // Save current progress for skip so they can resume
+      } else {
+        clearTourProgress(); // Clear progress for natural end
+      }
       // Reset step tracking
       lastSpokenStepRef.current = -1;
       setState({
@@ -194,9 +302,10 @@ export default function WalkthroughWrapper({
   return (
     <>
       <Joyride
+        key={`joyride-${tourActive ? "active" : "inactive"}-${stepIndex}`}
         callback={handleCallback}
         continuous
-        run={run}
+        run={run && tourActive && steps.length > 0}
         stepIndex={stepIndex}
         steps={steps}
         styles={{
