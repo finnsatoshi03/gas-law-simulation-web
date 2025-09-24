@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import Joyride, { CallBackProps, EVENTS } from "react-joyride";
+import Joyride, { CallBackProps, EVENTS, ACTIONS } from "react-joyride";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useWalkthrough } from "@/contexts/WalkthroughProvider";
 import { useAccessibility } from "@/contexts/AccessibilityProvider";
@@ -42,19 +42,60 @@ export default function WalkthroughWrapper({
     lastSpokenStepRef.current = -1;
   }, [stepIndex]);
 
-  // Monitor tour active state and force cleanup if needed
+  // Monitor tour active state and ensure consistency
   useEffect(() => {
     if (!tourActive && run) {
-      console.log("Force stopping tour due to tourActive=false");
       setState({ run: false });
     }
   }, [tourActive, run, setState]);
 
   const handleCallback = (data: CallBackProps) => {
-    const { index, step: { data: stepData } = {}, step, type, action } = data;
+    const {
+      index,
+      step: { data: stepData } = {},
+      step,
+      type,
+      action,
+      status,
+    } = data;
 
     // Debug logging for walkthrough issues (can be removed in production)
-    // console.log("Joyride callback:", { type, action, index, target: step?.target, stepData });
+    console.log("Joyride callback:", {
+      type,
+      action,
+      status,
+      index,
+      target: step?.target,
+      stepData,
+    });
+
+    // Handle immediate close action first
+    if (action === ACTIONS.CLOSE) {
+      console.log("Close action detected - saving progress for resume");
+      stopSpeaking();
+      saveTourProgress(index); // Save progress so user can resume later
+      lastSpokenStepRef.current = -1;
+      setState({
+        run: false,
+        stepIndex: 0,
+        tourActive: false,
+      });
+      return;
+    }
+
+    // Handle skip action
+    if (action === ACTIONS.SKIP) {
+      console.log("Skip action detected - saving progress for resume");
+      stopSpeaking();
+      saveTourProgress(index); // Save progress so user can resume later
+      lastSpokenStepRef.current = -1;
+      setState({
+        run: false,
+        stepIndex: 0,
+        tourActive: false,
+      });
+      return;
+    }
 
     const isUnitSelectorStep =
       stepData?.current === ".input-unit-pressure-1-selector" ||
@@ -186,43 +227,16 @@ export default function WalkthroughWrapper({
           // Save progress with the next step index
           saveTourProgress(nextIndex);
         } else {
-          // Tour completed - this is the last step
+          // Tour completed - this is the last step, user finished naturally
+          console.log("Tour completed naturally - clearing progress");
           stopSpeaking();
-          clearTourProgress();
-          // Use setTimeout to ensure proper cleanup
-          setTimeout(() => {
-            setState({
-              run: false,
-              stepIndex: 0,
-              tourActive: false,
-            });
-            // Force a second cleanup in case the first one doesn't work
-            setTimeout(() => {
-              if (run || tourActive) {
-                console.log(
-                  "Force cleanup: tour still active, forcing stop with aggressive cleanup"
-                );
-                // Aggressive cleanup approach
-                stopSpeaking();
-                clearTourProgress();
-                setState({
-                  run: false,
-                  stepIndex: 0,
-                  tourActive: false,
-                });
-                // Clear any timeouts or intervals that might be keeping the tour alive
-                lastSpokenStepRef.current = -1;
-
-                // Force remove any Joyride elements from DOM as last resort
-                setTimeout(() => {
-                  const joyrideElements = document.querySelectorAll(
-                    '[data-test-id="joyride"], .react-joyride__tooltip, .react-joyride__overlay'
-                  );
-                  joyrideElements.forEach((el) => el.remove());
-                }, 100);
-              }
-            }, 500);
-          }, 100);
+          clearTourProgress(); // Clear progress since tour is complete
+          lastSpokenStepRef.current = -1;
+          setState({
+            run: false,
+            stepIndex: 0,
+            tourActive: false,
+          });
         }
       }
     } else if (type === EVENTS.TOOLTIP) {
@@ -280,22 +294,6 @@ export default function WalkthroughWrapper({
           });
         }, 500);
       }
-    } else if (type === EVENTS.TOUR_END || action === "skip") {
-      // Stop speech when tour ends or is skipped
-      stopSpeaking();
-      // Clear progress when tour is skipped or ended
-      if (action === "skip") {
-        saveTourProgress(index); // Save current progress for skip so they can resume
-      } else {
-        clearTourProgress(); // Clear progress for natural end
-      }
-      // Reset step tracking
-      lastSpokenStepRef.current = -1;
-      setState({
-        run: false,
-        stepIndex: 0,
-        tourActive: false,
-      });
     }
   };
 
@@ -318,6 +316,8 @@ export default function WalkthroughWrapper({
         showProgress
         showSkipButton
         disableScrolling
+        disableCloseOnEsc={false}
+        hideCloseButton={false}
         locale={{
           skip: accessibilitySettings.isTextToSpeechEnabled
             ? "Skip & Stop Speech"
@@ -325,6 +325,7 @@ export default function WalkthroughWrapper({
           last: "Finish",
           next: "Next",
           back: "Back",
+          close: "Close",
         }}
       />
       {children}
