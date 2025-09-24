@@ -13,6 +13,7 @@ interface GasLawResult {
   target: string;
   value: string;
   moles?: string;
+  originalUnit?: string;
 }
 
 interface CalculationHistoryEntry {

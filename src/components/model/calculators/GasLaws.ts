@@ -64,6 +64,7 @@ const formatResult = (
       : "moles",
     units[target]
   ).toFixed(4),
+  originalUnit: units[target],
   ...(moles !== undefined && {
     moles: convertFromBase(moles, "moles", units.n).toFixed(4),
   }),

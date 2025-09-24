@@ -217,7 +217,9 @@ const convertValue = (
 };
 
 const GasLawInput: React.FC<
-  GasLawInputProps & { result?: { target?: string; value?: string } }
+  GasLawInputProps & {
+    result?: { target?: string; value?: string; originalUnit?: string };
+  }
 > = ({
   id,
   label,
@@ -234,6 +236,22 @@ const GasLawInput: React.FC<
 }) => {
   const isMobile = useIsMobile();
   const availableUnits = UNITS[unitType];
+
+  // Helper function to get the display value for calculated fields
+  const getDisplayValue = () => {
+    if (result?.target === id && result.value) {
+      // Get the original unit the result was calculated in
+      const originalUnit = result.originalUnit || selectedUnit;
+      const currentUnit = selectedUnit;
+
+      // If the units are different, convert the result value
+      if (originalUnit !== currentUnit) {
+        return convertValue(result.value, originalUnit, currentUnit, unitType);
+      }
+      return result.value;
+    }
+    return value;
+  };
 
   const getTooltipContent = () => {
     switch (unitType) {
@@ -287,7 +305,7 @@ const GasLawInput: React.FC<
               type="number"
               step="any"
               defaultValue={defaultValue}
-              value={result?.target === id ? result.value : value}
+              value={getDisplayValue()}
               onChange={(e) => onValueChange(id, e.target.value)}
               className={`flex-1 text-xs sm:text-sm h-8 sm:h-10 px-2 sm:px-3 ${
                 isCalculated ? "bg-muted text-blue-500" : ""
@@ -483,19 +501,49 @@ const GasLawInputGroup: React.FC<GasLawInputGroupProps> = ({
     relatedVariables.forEach((relatedVar) => {
       const relatedValue = values[relatedVar.id];
       const relatedOldUnit = units[relatedVar.id];
+      const isCalculatedField = result?.target === relatedVar.id;
 
-      if (!disabledFields.includes(relatedVar.id)) {
-        const synchronizedValue = convertValue(
-          relatedValue,
-          relatedOldUnit,
-          newUnit,
-          variable.unitType
-        );
-
+      // Synchronize units for all related variables, including calculated ones
+      if (!disabledFields.includes(relatedVar.id) || isCalculatedField) {
+        // Always update the unit first
         onUnitChange(relatedVar.id, newUnit);
-        onValueChange(relatedVar.id, synchronizedValue);
+
+        // For calculated fields, we need to handle unit conversion differently
+        if (isCalculatedField) {
+          // The calculated field's display value will be handled by the component render
+          // We just need to ensure the unit is updated
+        } else {
+          // For non-calculated fields, convert and update the value
+          const synchronizedValue = convertValue(
+            relatedValue,
+            relatedOldUnit,
+            newUnit,
+            variable.unitType
+          );
+          onValueChange(relatedVar.id, synchronizedValue);
+        }
       }
     });
+
+    // Only clear result if we change units for a non-calculated field
+    // For calculated fields, the display value will be converted automatically
+    if (
+      result?.target !== id &&
+      !relatedVariables.some((v) => result?.target === v.id)
+    ) {
+      // If this unit change affects variables that might be used in calculation,
+      // clear result to trigger recalculation
+      const hasFilledRelatedVariables = relatedVariables.some(
+        (relatedVar) =>
+          values[relatedVar.id] && values[relatedVar.id].trim() !== ""
+      );
+
+      if (hasFilledRelatedVariables) {
+        setTimeout(() => {
+          clearResult();
+        }, 10);
+      }
+    }
   };
 
   const handleDrag = (_e: any, data: { x: number; y: number }) => {
