@@ -28,6 +28,11 @@ const celsiusToKelvin = (celsius: number): number => celsius + 273.15;
 const fahrenheitToKelvin = (fahrenheit: number): number =>
   ((fahrenheit - 32) * 5) / 9 + 273.15;
 
+// Reverse temperature conversion utilities
+const kelvinToCelsius = (kelvin: number): number => kelvin - 273.15;
+const kelvinToFahrenheit = (kelvin: number): number =>
+  ((kelvin - 273.15) * 9) / 5 + 32;
+
 const getTemperatureConversionStep = (
   temperature: number,
   unit: string
@@ -51,6 +56,40 @@ const getKelvinTemperature = (temperature: number, unit: string): number => {
     return fahrenheitToKelvin(temperature);
   }
   return temperature; // Already in Kelvin or other unit
+};
+
+const getKelvinToUnitConversion = (
+  kelvin: number,
+  targetUnit: string
+): { value: number; conversionStep: string } => {
+  if (targetUnit === "C" || targetUnit === "°C" || targetUnit === "celsius") {
+    const celsius = kelvinToCelsius(kelvin);
+    return {
+      value: celsius,
+      conversionStep: `${kelvin.toFixed(
+        2
+      )}\\text{ K} - 273.15 = ${celsius.toFixed(2)}°\\text{C}`,
+    };
+  } else if (
+    targetUnit === "F" ||
+    targetUnit === "°F" ||
+    targetUnit === "fahrenheit"
+  ) {
+    const fahrenheit = kelvinToFahrenheit(kelvin);
+    return {
+      value: fahrenheit,
+      conversionStep: `(${kelvin.toFixed(
+        2
+      )}\\text{ K} - 273.15) \\times \\frac{9}{5} + 32 = ${fahrenheit.toFixed(
+        2
+      )}°\\text{F}`,
+    };
+  }
+  // Already in Kelvin
+  return {
+    value: kelvin,
+    conversionStep: "",
+  };
 };
 
 // Enum for Gas Law Types
@@ -245,7 +284,7 @@ export const SolutionSheet: React.FC<SolutionSheetProps> = ({
           <p>Click to view the solution steps for the selected gas law.</p>
         </TooltipContent>
       </Tooltip>
-      <DialogContent className="max-w-[800px] overflow-y-auto p-6">
+      <DialogContent className="max-w-[800px] max-h-[90vh] overflow-y-auto p-6">
         {!solutionAuthenticated ? (
           <div className="space-y-4">
             <h2 className="text-xl font-bold mb-4">Solution Authentication</h2>
@@ -536,7 +575,7 @@ const charlesLawSolution = (
       };
       return result;
     }
-    case "v2":
+    case "v2": {
       return {
         equation: equationText,
         ...(t1ConversionStep && { t1_conversion: `T_1: ${t1ConversionStep}` }),
@@ -565,7 +604,11 @@ const charlesLawSolution = (
           t1Kelvin
         ).toFixed(2)}\\text{ ${units.v2}}`,
       };
-    case "t1":
+    }
+    case "t1": {
+      const t1ResultKelvin = (v1 * t2Kelvin) / v2;
+      const t1Conversion = getKelvinToUnitConversion(t1ResultKelvin, units.t1);
+
       return {
         equation: equationText,
         ...(t2ConversionStep && { t2_conversion: `T_2: ${t2ConversionStep}` }),
@@ -578,7 +621,7 @@ const charlesLawSolution = (
           v1 * t2Kelvin
         ).toFixed(2)}\\text{ ${units.v1}⋅K}`,
         denominator_calculation: `(${v2}\\text{ ${units.v2}}) = ${v2}\\text{ ${units.v2}}`,
-        final_calculation: `T_1 = \\frac{${v1}${
+        calculation_in_kelvin: `T_1 = \\frac{${v1}${
           units.v1 === units.v2
             ? `\\textcolor{red}{\\cancel{\\text{ ${units.v1}}}}`
             : `\\text{ ${units.v1}}`
@@ -586,9 +629,16 @@ const charlesLawSolution = (
           units.v1 === units.v2
             ? `\\textcolor{red}{\\cancel{\\text{ ${units.v2}}}}`
             : `\\text{ ${units.v2}}`
-        }} = ${((v1 * t2Kelvin) / v2).toFixed(2)}\\text{ K}`,
+        }} = ${t1ResultKelvin.toFixed(2)}\\text{ K}`,
+        ...(t1Conversion.conversionStep && {
+          conversion_to_original_unit: t1Conversion.conversionStep,
+        }),
       };
-    case "t2":
+    }
+    case "t2": {
+      const t2ResultKelvin = (v2 * t1Kelvin) / v1;
+      const t2Conversion = getKelvinToUnitConversion(t2ResultKelvin, units.t2);
+
       return {
         equation: equationText,
         ...(t1ConversionStep && { t1_conversion: `T_1: ${t1ConversionStep}` }),
@@ -601,7 +651,7 @@ const charlesLawSolution = (
           v2 * t1Kelvin
         ).toFixed(2)}\\text{ ${units.v2}⋅K}`,
         denominator_calculation: `(${v1}\\text{ ${units.v1}}) = ${v1}\\text{ ${units.v1}}`,
-        final_calculation: `T_2 = \\frac{${v2}${
+        calculation_in_kelvin: `T_2 = \\frac{${v2}${
           units.v2 === units.v1
             ? `\\textcolor{red}{\\cancel{\\text{ ${units.v2}}}}`
             : `\\text{ ${units.v2}}`
@@ -609,8 +659,12 @@ const charlesLawSolution = (
           units.v2 === units.v1
             ? `\\textcolor{red}{\\cancel{\\text{ ${units.v1}}}}`
             : `\\text{ ${units.v1}}`
-        }} = ${((v2 * t1Kelvin) / v1).toFixed(2)}\\text{ K}`,
+        }} = ${t2ResultKelvin.toFixed(2)}\\text{ K}`,
+        ...(t2Conversion.conversionStep && {
+          conversion_to_original_unit: t2Conversion.conversionStep,
+        }),
       };
+    }
     default:
       return null;
   }
@@ -638,7 +692,7 @@ const combinedGasLawSolution = (
   const t2ConversionStep = getTemperatureConversionStep(t2, units.t2);
 
   switch (target) {
-    case "p1":
+    case "p1": {
       return {
         equation: equationText,
         ...(t1ConversionStep && { t1_conversion: `T_1: ${t1ConversionStep}` }),
@@ -679,53 +733,74 @@ const combinedGasLawSolution = (
           (v1 * t2Kelvin)
         ).toFixed(2)}\\text{ ${units.p1}}`,
       };
-    case "v1":
+    }
+    case "v1": {
       return {
         equation: equationText,
-        rearranged_equation: `V_1 = \\frac{P_2V_2T_1}{P_1T_2} \\quad \\Rightarrow \\frac{(${p2}\\text{ ${units.p2}})(${v2}\\text{ ${units.v2}})(${t1}\\text{ ${units.t1}})}{(${p1}\\text{ ${units.p1}})(${t2}\\text{ ${units.t2}})}`,
+        ...(t1ConversionStep && { t1_conversion: `T_1: ${t1ConversionStep}` }),
+        ...(t2ConversionStep && { t2_conversion: `T_2: ${t2ConversionStep}` }),
+        rearranged_equation: `V_1 = \\frac{P_2V_2T_1}{P_1T_2} \\quad \\Rightarrow \\frac{(${p2}\\text{ ${
+          units.p2
+        }})(${v2}\\text{ ${units.v2}})(${t1Kelvin.toFixed(
+          2
+        )}\\text{ K})}{(${p1}\\text{ ${units.p1}})(${t2Kelvin.toFixed(
+          2
+        )}\\text{ K})}`,
         numerator_calculation: `(${p2}\\text{ ${
           units.p2
-        }}) \\times (${v2}\\text{ ${units.v2}}) \\times (${t1}\\text{ ${
-          units.t1
-        }}) = ${p2 * v2 * t1}\\text{ ${units.p2}⋅${units.v2}⋅${units.t1}}`,
+        }}) \\times (${v2}\\text{ ${units.v2}}) \\times (${t1Kelvin.toFixed(
+          2
+        )}\\text{ K}) = ${(p2 * v2 * t1Kelvin).toFixed(2)}\\text{ ${units.p2}⋅${
+          units.v2
+        }⋅K}`,
         denominator_calculation: `(${p1}\\text{ ${
           units.p1
-        }}) \\times (${t2}\\text{ ${units.t2}}) = ${p1 * t2}\\text{ ${
-          units.p1
-        }⋅${units.t2}}`,
+        }}) \\times (${t2Kelvin.toFixed(2)}\\text{ K}) = ${(
+          p1 * t2Kelvin
+        ).toFixed(2)}\\text{ ${units.p1}⋅K}`,
         final_calculation: `\\frac{${p2}${
           units.p2 === units.p1
             ? `\\textcolor{red}{\\cancel{\\text{ ${units.p2}}}}`
             : `\\text{ ${units.p2}}`
-        } \\times ${v2}\\text{ ${units.v2}} \\times ${t1}${
-          units.t1 === units.t2
-            ? `\\textcolor{red}{\\cancel{\\text{ ${units.t1}}}}`
-            : `\\text{ ${units.t1}}`
-        }}{${p1}${
+        } \\times ${v2}\\text{ ${units.v2}} \\times ${t1Kelvin.toFixed(
+          2
+        )}\\textcolor{red}{\\cancel{\\text{ K}}}}{${p1}${
           units.p1 === units.p2
             ? `\\textcolor{red}{\\cancel{\\text{ ${units.p1}}}}`
             : `\\text{ ${units.p1}}`
-        } \\times ${t2}${
-          units.t2 === units.t1
-            ? `\\textcolor{red}{\\cancel{\\text{ ${units.t2}}}}`
-            : `\\text{ ${units.t2}}`
-        }} = ${((p2 * v2 * t1) / (p1 * t2)).toFixed(2)}\\text{ ${units.v1}}`,
+        } \\times ${t2Kelvin.toFixed(
+          2
+        )}\\textcolor{red}{\\cancel{\\text{ K}}}} = ${(
+          (p2 * v2 * t1Kelvin) /
+          (p1 * t2Kelvin)
+        ).toFixed(2)}\\text{ ${units.v1}}`,
       };
-    case "t1":
+    }
+    case "t1": {
+      const t1ResultKelvin = (p1 * v1 * t2Kelvin) / (p2 * v2);
+      const t1Conversion = getKelvinToUnitConversion(t1ResultKelvin, units.t1);
+
       return {
         equation: equationText,
-        rearranged_equation: `T_1 = \\frac{P_1V_1T_2}{P_2V_2} \\quad \\Rightarrow \\frac{(${p1}\\text{ ${units.p1}})(${v1}\\text{ ${units.v1}})(${t2}\\text{ ${units.t2}})}{(${p2}\\text{ ${units.p2}})(${v2}\\text{ ${units.v2}})}`,
+        ...(t2ConversionStep && { t2_conversion: `T_2: ${t2ConversionStep}` }),
+        rearranged_equation: `T_1 = \\frac{P_1V_1T_2}{P_2V_2} \\quad \\Rightarrow \\frac{(${p1}\\text{ ${
+          units.p1
+        }})(${v1}\\text{ ${units.v1}})(${t2Kelvin.toFixed(
+          2
+        )}\\text{ K})}{(${p2}\\text{ ${units.p2}})(${v2}\\text{ ${units.v2}})}`,
         numerator_calculation: `(${p1}\\text{ ${
           units.p1
-        }}) \\times (${v1}\\text{ ${units.v1}}) \\times (${t2}\\text{ ${
-          units.t2
-        }}) = ${p1 * v1 * t2}\\text{ ${units.p1}⋅${units.v1}⋅${units.t2}}`,
+        }}) \\times (${v1}\\text{ ${units.v1}}) \\times (${t2Kelvin.toFixed(
+          2
+        )}\\text{ K}) = ${(p1 * v1 * t2Kelvin).toFixed(2)}\\text{ ${units.p1}⋅${
+          units.v1
+        }⋅K}`,
         denominator_calculation: `(${p2}\\text{ ${
           units.p2
-        }}) \\times (${v2}\\text{ ${units.v2}}) = ${p2 * v2}\\text{ ${
-          units.p2
-        }⋅${units.v2}}`,
-        final_calculation: `\\frac{${p1}${
+        }}) \\times (${v2}\\text{ ${units.v2}}) = ${(p2 * v2).toFixed(
+          2
+        )}\\text{ ${units.p2}⋅${units.v2}}`,
+        calculation_in_kelvin: `\\frac{${p1}${
           units.p1 === units.p2
             ? `\\textcolor{red}{\\cancel{\\text{ ${units.p1}}}}`
             : `\\text{ ${units.p1}}`
@@ -733,7 +808,7 @@ const combinedGasLawSolution = (
           units.v1 === units.v2
             ? `\\textcolor{red}{\\cancel{\\text{ ${units.v1}}}}`
             : `\\text{ ${units.v1}}`
-        } \\times ${t2}\\text{ ${units.t2}}}{${p2}${
+        } \\times ${t2Kelvin.toFixed(2)}\\text{ K}}{${p2}${
           units.p2 === units.p1
             ? `\\textcolor{red}{\\cancel{\\text{ ${units.p2}}}}`
             : `\\text{ ${units.p2}}`
@@ -741,87 +816,121 @@ const combinedGasLawSolution = (
           units.v2 === units.v1
             ? `\\textcolor{red}{\\cancel{\\text{ ${units.v2}}}}`
             : `\\text{ ${units.v2}}`
-        }} = ${((p1 * v1 * t2) / (p2 * v2)).toFixed(2)}\\text{ ${units.t1}}`,
+        }} = ${t1ResultKelvin.toFixed(2)}\\text{ K}`,
+        ...(t1Conversion.conversionStep && {
+          conversion_to_original_unit: t1Conversion.conversionStep,
+        }),
       };
-    case "p2":
+    }
+    case "p2": {
       return {
         equation: equationText,
-        rearranged_equation: `P_2 = \\frac{P_1V_1T_2}{V_2T_1} \\quad \\Rightarrow \\frac{(${p1}\\text{ ${units.p1}})(${v1}\\text{ ${units.v1}})(${t2}\\text{ ${units.t2}})}{(${v2}\\text{ ${units.v2}})(${t1}\\text{ ${units.t1}})}`,
+        ...(t1ConversionStep && { t1_conversion: `T_1: ${t1ConversionStep}` }),
+        ...(t2ConversionStep && { t2_conversion: `T_2: ${t2ConversionStep}` }),
+        rearranged_equation: `P_2 = \\frac{P_1V_1T_2}{V_2T_1} \\quad \\Rightarrow \\frac{(${p1}\\text{ ${
+          units.p1
+        }})(${v1}\\text{ ${units.v1}})(${t2Kelvin.toFixed(
+          2
+        )}\\text{ K})}{(${v2}\\text{ ${units.v2}})(${t1Kelvin.toFixed(
+          2
+        )}\\text{ K})}`,
         numerator_calculation: `(${p1}\\text{ ${
           units.p1
-        }}) \\times (${v1}\\text{ ${units.v1}}) \\times (${t2}\\text{ ${
-          units.t2
-        }}) = ${p1 * v1 * t2}\\text{ ${units.p1}⋅${units.v1}⋅${units.t2}}`,
+        }}) \\times (${v1}\\text{ ${units.v1}}) \\times (${t2Kelvin.toFixed(
+          2
+        )}\\text{ K}) = ${(p1 * v1 * t2Kelvin).toFixed(2)}\\text{ ${units.p1}⋅${
+          units.v1
+        }⋅K}`,
         denominator_calculation: `(${v2}\\text{ ${
           units.v2
-        }}) \\times (${t1}\\text{ ${units.t1}}) = ${v2 * t1}\\text{ ${
-          units.v2
-        }⋅${units.t1}}`,
+        }}) \\times (${t1Kelvin.toFixed(2)}\\text{ K}) = ${(
+          v2 * t1Kelvin
+        ).toFixed(2)}\\text{ ${units.v2}⋅K}`,
         final_calculation: `\\frac{${p1}\\text{ ${units.p1}} \\times ${v1}${
           units.v1 === units.v2
             ? `\\textcolor{red}{\\cancel{\\text{ ${units.v1}}}}`
             : `\\text{ ${units.v1}}`
-        } \\times ${t2}${
-          units.t2 === units.t1
-            ? `\\textcolor{red}{\\cancel{\\text{ ${units.t2}}}}`
-            : `\\text{ ${units.t2}}`
-        }}{${v2}${
+        } \\times ${t2Kelvin.toFixed(
+          2
+        )}\\textcolor{red}{\\cancel{\\text{ K}}}}{${v2}${
           units.v2 === units.v1
             ? `\\textcolor{red}{\\cancel{\\text{ ${units.v2}}}}`
             : `\\text{ ${units.v2}}`
-        } \\times ${t1}${
-          units.t1 === units.t2
-            ? `\\textcolor{red}{\\cancel{\\text{ ${units.t1}}}}`
-            : `\\text{ ${units.t1}}`
-        }} = ${((p1 * v1 * t2) / (v2 * t1)).toFixed(2)}\\text{ ${units.p2}}`,
+        } \\times ${t1Kelvin.toFixed(
+          2
+        )}\\textcolor{red}{\\cancel{\\text{ K}}}} = ${(
+          (p1 * v1 * t2Kelvin) /
+          (v2 * t1Kelvin)
+        ).toFixed(2)}\\text{ ${units.p2}}`,
       };
-    case "v2":
+    }
+    case "v2": {
       return {
         equation: equationText,
-        rearranged_equation: `V_2 = \\frac{P_1V_1T_2}{P_2T_1} \\quad \\Rightarrow \\frac{(${p1}\\text{ ${units.p1}})(${v1}\\text{ ${units.v1}})(${t2}\\text{ ${units.t2}})}{(${p2}\\text{ ${units.p2}})(${t1}\\text{ ${units.t1}})}`,
+        ...(t1ConversionStep && { t1_conversion: `T_1: ${t1ConversionStep}` }),
+        ...(t2ConversionStep && { t2_conversion: `T_2: ${t2ConversionStep}` }),
+        rearranged_equation: `V_2 = \\frac{P_1V_1T_2}{P_2T_1} \\quad \\Rightarrow \\frac{(${p1}\\text{ ${
+          units.p1
+        }})(${v1}\\text{ ${units.v1}})(${t2Kelvin.toFixed(
+          2
+        )}\\text{ K})}{(${p2}\\text{ ${units.p2}})(${t1Kelvin.toFixed(
+          2
+        )}\\text{ K})}`,
         numerator_calculation: `(${p1}\\text{ ${
           units.p1
-        }}) \\times (${v1}\\text{ ${units.v1}}) \\times (${t2}\\text{ ${
-          units.t2
-        }}) = ${p1 * v1 * t2}\\text{ ${units.p1}⋅${units.v1}⋅${units.t2}}`,
+        }}) \\times (${v1}\\text{ ${units.v1}}) \\times (${t2Kelvin.toFixed(
+          2
+        )}\\text{ K}) = ${(p1 * v1 * t2Kelvin).toFixed(2)}\\text{ ${units.p1}⋅${
+          units.v1
+        }⋅K}`,
         denominator_calculation: `(${p2}\\text{ ${
           units.p2
-        }}) \\times (${t1}\\text{ ${units.t1}}) = ${p2 * t1}\\text{ ${
-          units.p2
-        }⋅${units.t1}}`,
+        }}) \\times (${t1Kelvin.toFixed(2)}\\text{ K}) = ${(
+          p2 * t1Kelvin
+        ).toFixed(2)}\\text{ ${units.p2}⋅K}`,
         final_calculation: `\\frac{${p1}${
           units.p1 === units.p2
             ? `\\textcolor{red}{\\cancel{\\text{ ${units.p1}}}}`
             : `\\text{ ${units.p1}}`
-        } \\times ${v1}\\text{ ${units.v1}} \\times ${t2}${
-          units.t2 === units.t1
-            ? `\\textcolor{red}{\\cancel{\\text{ ${units.t2}}}}`
-            : `\\text{ ${units.t2}}`
-        }}{${p2}${
+        } \\times ${v1}\\text{ ${units.v1}} \\times ${t2Kelvin.toFixed(
+          2
+        )}\\textcolor{red}{\\cancel{\\text{ K}}}}{${p2}${
           units.p2 === units.p1
             ? `\\textcolor{red}{\\cancel{\\text{ ${units.p2}}}}`
             : `\\text{ ${units.p2}}`
-        } \\times ${t1}${
-          units.t1 === units.t2
-            ? `\\textcolor{red}{\\cancel{\\text{ ${units.t1}}}}`
-            : `\\text{ ${units.t1}}`
-        }} = ${((p1 * v1 * t2) / (p2 * t1)).toFixed(2)}\\text{ ${units.v2}}`,
+        } \\times ${t1Kelvin.toFixed(
+          2
+        )}\\textcolor{red}{\\cancel{\\text{ K}}}} = ${(
+          (p1 * v1 * t2Kelvin) /
+          (p2 * t1Kelvin)
+        ).toFixed(2)}\\text{ ${units.v2}}`,
       };
-    case "t2":
+    }
+    case "t2": {
+      const t2ResultKelvin = (p2 * v2 * t1Kelvin) / (p1 * v1);
+      const t2Conversion = getKelvinToUnitConversion(t2ResultKelvin, units.t2);
+
       return {
         equation: equationText,
-        rearranged_equation: `T_2 = \\frac{P_2V_2T_1}{P_1V_1} \\quad \\Rightarrow \\frac{(${p2}\\text{ ${units.p2}})(${v2}\\text{ ${units.v2}})(${t1}\\text{ ${units.t1}})}{(${p1}\\text{ ${units.p1}})(${v1}\\text{ ${units.v1}})}`,
+        ...(t1ConversionStep && { t1_conversion: `T_1: ${t1ConversionStep}` }),
+        rearranged_equation: `T_2 = \\frac{P_2V_2T_1}{P_1V_1} \\quad \\Rightarrow \\frac{(${p2}\\text{ ${
+          units.p2
+        }})(${v2}\\text{ ${units.v2}})(${t1Kelvin.toFixed(
+          2
+        )}\\text{ K})}{(${p1}\\text{ ${units.p1}})(${v1}\\text{ ${units.v1}})}`,
         numerator_calculation: `(${p2}\\text{ ${
           units.p2
-        }}) \\times (${v2}\\text{ ${units.v2}}) \\times (${t1}\\text{ ${
-          units.t1
-        }}) = ${p2 * v2 * t1}\\text{ ${units.p2}⋅${units.v2}⋅${units.t1}}`,
+        }}) \\times (${v2}\\text{ ${units.v2}}) \\times (${t1Kelvin.toFixed(
+          2
+        )}\\text{ K}) = ${(p2 * v2 * t1Kelvin).toFixed(2)}\\text{ ${units.p2}⋅${
+          units.v2
+        }⋅K}`,
         denominator_calculation: `(${p1}\\text{ ${
           units.p1
-        }}) \\times (${v1}\\text{ ${units.v1}}) = ${p1 * v1}\\text{ ${
-          units.p1
-        }⋅${units.v1}}`,
-        final_calculation: `\\frac{${p2}${
+        }}) \\times (${v1}\\text{ ${units.v1}}) = ${(p1 * v1).toFixed(
+          2
+        )}\\text{ ${units.p1}⋅${units.v1}}`,
+        calculation_in_kelvin: `\\frac{${p2}${
           units.p2 === units.p1
             ? `\\textcolor{red}{\\cancel{\\text{ ${units.p2}}}}`
             : `\\text{ ${units.p2}}`
@@ -829,7 +938,7 @@ const combinedGasLawSolution = (
           units.v2 === units.v1
             ? `\\textcolor{red}{\\cancel{\\text{ ${units.v2}}}}`
             : `\\text{ ${units.v2}}`
-        } \\times ${t1}\\text{ ${units.t1}}}{${p1}${
+        } \\times ${t1Kelvin.toFixed(2)}\\text{ K}}{${p1}${
           units.p1 === units.p2
             ? `\\textcolor{red}{\\cancel{\\text{ ${units.p1}}}}`
             : `\\text{ ${units.p1}}`
@@ -837,8 +946,12 @@ const combinedGasLawSolution = (
           units.v1 === units.v2
             ? `\\textcolor{red}{\\cancel{\\text{ ${units.v1}}}}`
             : `\\text{ ${units.v1}}`
-        }} = ${((p2 * v2 * t1) / (p1 * v1)).toFixed(2)}\\text{ ${units.t2}}`,
+        }} = ${t2ResultKelvin.toFixed(2)}\\text{ K}`,
+        ...(t2Conversion.conversionStep && {
+          conversion_to_original_unit: t2Conversion.conversionStep,
+        }),
       };
+    }
     default:
       return null;
   }
@@ -868,7 +981,7 @@ const idealGasLawSolution = (
     "L⋅atm/mol⋅K";
 
   switch (target) {
-    case "p":
+    case "p": {
       return {
         equation: equationText,
         ...(tConversionStep && { t_conversion: `T: ${tConversionStep}` }),
@@ -888,7 +1001,8 @@ const idealGasLawSolution = (
           v
         ).toFixed(4)}\\text{ ${units.p}}`,
       };
-    case "v":
+    }
+    case "v": {
       return {
         equation: equationText,
         ...(tConversionStep && { t_conversion: `T: ${tConversionStep}` }),
@@ -907,7 +1021,8 @@ const idealGasLawSolution = (
           units.p
         }}}}} = ${((n * R * tKelvin) / p).toFixed(4)}\\text{ L}`,
       };
-    case "n":
+    }
+    case "n": {
       return {
         equation: equationText,
         ...(tConversionStep && { t_conversion: `T: ${tConversionStep}` }),
@@ -935,7 +1050,11 @@ const idealGasLawSolution = (
           (R * tKelvin)
         ).toFixed(4)}\\text{ mol}`,
       };
-    case "t":
+    }
+    case "t": {
+      const tResultKelvin = (p * v) / (n * R);
+      const tConversion = getKelvinToUnitConversion(tResultKelvin, units.t);
+
       return {
         equation: equationText,
         rearranged_equation: `T = \\frac{PV}{nR} \\quad \\Rightarrow \\frac{(${p}\\text{ ${units.p}})(${v}\\text{ L})}{(${n}\\text{ mol})(${R}\\text{ ${rUnit}})}`,
@@ -947,16 +1066,18 @@ const idealGasLawSolution = (
         denominator_calculation: `(${n}\\text{ mol}) \\times (${R}\\text{ ${rUnit}}) = ${(
           n * R
         ).toFixed(4)}\\text{ ${units.p}⋅L/mol⋅K}`,
-        final_calculation: `\\frac{${p}\\textcolor{red}{\\cancel{\\text{ ${
+        calculation_in_kelvin: `\\frac{${p}\\textcolor{red}{\\cancel{\\text{ ${
           units.p
         }}}} \\times ${v}\\textcolor{red}{\\cancel{\\text{ L}}}}{${n}\\textcolor{red}{\\cancel{\\text{ mol}}} \\times ${R}\\textcolor{red}{\\cancel{\\text{ ${
           units.p
-        }}}}\\textcolor{red}{\\cancel{\\text{⋅L}}}\\text{/}\\textcolor{red}{\\cancel{\\text{mol}}}\\text{⋅K}} = ${(
-          (p * v) /
-          (n * R)
-        ).toFixed(4)}\\text{ K}`,
-        note: "\\text{Result is already in Kelvin (K)}",
+        }}}}\\textcolor{red}{\\cancel{\\text{⋅L}}}\\text{/}\\textcolor{red}{\\cancel{\\text{mol}}}\\text{⋅K}} = ${tResultKelvin.toFixed(
+          4
+        )}\\text{ K}`,
+        ...(tConversion.conversionStep && {
+          conversion_to_original_unit: tConversion.conversionStep,
+        }),
       };
+    }
     default:
       return null;
   }
@@ -1055,8 +1176,9 @@ const gayLussacsLawSolution = (
   // Get conversion steps
   const t1ConversionStep = getTemperatureConversionStep(t1, units.t1);
   const t2ConversionStep = getTemperatureConversionStep(t2, units.t2);
+
   switch (target) {
-    case "p1":
+    case "p1": {
       return {
         equation: equationText,
         ...(t1ConversionStep && { t1_conversion: `T_1: ${t1ConversionStep}` }),
@@ -1085,63 +1207,93 @@ const gayLussacsLawSolution = (
           t2Kelvin
         ).toFixed(2)}\\text{ ${units.p1}}`,
       };
-    case "p2":
+    }
+    case "p2": {
       return {
         equation: equationText,
-        rearranged_equation: `P_2 = \\frac{P_1T_2}{T_1} \\quad \\Rightarrow \\frac{(${p1}\\text{ ${units.p1}})(${t2}\\text{ ${units.t2}})}{${t1}\\text{ ${units.t1}}}`,
+        ...(t1ConversionStep && { t1_conversion: `T_1: ${t1ConversionStep}` }),
+        ...(t2ConversionStep && { t2_conversion: `T_2: ${t2ConversionStep}` }),
+        rearranged_equation: `P_2 = \\frac{P_1T_2}{T_1} \\quad \\Rightarrow \\frac{(${p1}\\text{ ${
+          units.p1
+        }})(${t2Kelvin.toFixed(2)}\\text{ K})}{${t1Kelvin.toFixed(
+          2
+        )}\\text{ K}}`,
         numerator_calculation: `(${p1}\\text{ ${
           units.p1
-        }}) \\times (${t2}\\text{ ${units.t2}}) = ${p1 * t2}\\text{ ${
-          units.p1
-        }⋅${units.t2}}`,
-        denominator_calculation: `(${t1}\\text{ ${units.t1}}) = ${t1}\\text{ ${units.t1}}`,
+        }}) \\times (${t2Kelvin.toFixed(2)}\\text{ K}) = ${(
+          p1 * t2Kelvin
+        ).toFixed(2)}\\text{ ${units.p1}⋅K}`,
+        denominator_calculation: `(${t1Kelvin.toFixed(
+          2
+        )}\\text{ K}) = ${t1Kelvin.toFixed(2)}\\text{ K}`,
         final_calculation: `\\frac{${p1}\\text{ ${
           units.p1
-        }} \\times ${t2}\\textcolor{red}{\\cancel{\\text{ ${
-          units.t2
-        }}}}}{${t1}\\textcolor{red}{\\cancel{\\text{ ${units.t1}}}}} = ${(
-          (p1 * t2) /
-          t1
+        }} \\times ${t2Kelvin.toFixed(
+          2
+        )}\\textcolor{red}{\\cancel{\\text{ K}}}}{${t1Kelvin.toFixed(
+          2
+        )}\\textcolor{red}{\\cancel{\\text{ K}}}} = ${(
+          (p1 * t2Kelvin) /
+          t1Kelvin
         ).toFixed(2)}\\text{ ${units.p2}}`,
       };
-    case "t1":
+    }
+    case "t1": {
+      const t1ResultKelvin = (p1 * t2Kelvin) / p2;
+      const t1Conversion = getKelvinToUnitConversion(t1ResultKelvin, units.t1);
+
       return {
         equation: equationText,
-        rearranged_equation: `T_1 = \\frac{P_1T_2}{P_2} \\quad \\Rightarrow \\frac{(${p1}\\text{ ${units.p1}})(${t2}\\text{ ${units.t2}})}{${p2}\\text{ ${units.p2}}}`,
+        ...(t2ConversionStep && { t2_conversion: `T_2: ${t2ConversionStep}` }),
+        rearranged_equation: `T_1 = \\frac{P_1T_2}{P_2} \\quad \\Rightarrow \\frac{(${p1}\\text{ ${
+          units.p1
+        }})(${t2Kelvin.toFixed(2)}\\text{ K})}{${p2}\\text{ ${units.p2}}}`,
         numerator_calculation: `(${p1}\\text{ ${
           units.p1
-        }}) \\times (${t2}\\text{ ${units.t2}}) = ${p1 * t2}\\text{ ${
-          units.p1
-        }⋅${units.t2}}`,
+        }}) \\times (${t2Kelvin.toFixed(2)}\\text{ K}) = ${(
+          p1 * t2Kelvin
+        ).toFixed(2)}\\text{ ${units.p1}⋅K}`,
         denominator_calculation: `(${p2}\\text{ ${units.p2}}) = ${p2}\\text{ ${units.p2}}`,
-        final_calculation: `\\frac{${p1}\\textcolor{red}{\\cancel{\\text{ ${
+        calculation_in_kelvin: `\\frac{${p1}\\textcolor{red}{\\cancel{\\text{ ${
           units.p1
-        }}}} \\times ${t2}\\text{ ${
-          units.t2
-        }}}{${p2}\\textcolor{red}{\\cancel{\\text{ ${units.p2}}}}} = ${(
-          (p1 * t2) /
-          p2
-        ).toFixed(2)}\\text{ ${units.t1}}`,
+        }}}} \\times ${t2Kelvin.toFixed(
+          2
+        )}\\text{ K}}{${p2}\\textcolor{red}{\\cancel{\\text{ ${
+          units.p2
+        }}}}} = ${t1ResultKelvin.toFixed(2)}\\text{ K}`,
+        ...(t1Conversion.conversionStep && {
+          conversion_to_original_unit: t1Conversion.conversionStep,
+        }),
       };
-    case "t2":
+    }
+    case "t2": {
+      const t2ResultKelvin = (p2 * t1Kelvin) / p1;
+      const t2Conversion = getKelvinToUnitConversion(t2ResultKelvin, units.t2);
+
       return {
         equation: equationText,
-        rearranged_equation: `T_2 = \\frac{P_2T_1}{P_1} \\quad \\Rightarrow \\frac{(${p2}\\text{ ${units.p2}})(${t1}\\text{ ${units.t1}})}{${p1}\\text{ ${units.p1}}}`,
+        ...(t1ConversionStep && { t1_conversion: `T_1: ${t1ConversionStep}` }),
+        rearranged_equation: `T_2 = \\frac{P_2T_1}{P_1} \\quad \\Rightarrow \\frac{(${p2}\\text{ ${
+          units.p2
+        }})(${t1Kelvin.toFixed(2)}\\text{ K})}{${p1}\\text{ ${units.p1}}}`,
         numerator_calculation: `(${p2}\\text{ ${
           units.p2
-        }}) \\times (${t1}\\text{ ${units.t1}}) = ${p2 * t1}\\text{ ${
-          units.p2
-        }⋅${units.t1}}`,
+        }}) \\times (${t1Kelvin.toFixed(2)}\\text{ K}) = ${(
+          p2 * t1Kelvin
+        ).toFixed(2)}\\text{ ${units.p2}⋅K}`,
         denominator_calculation: `(${p1}\\text{ ${units.p1}}) = ${p1}\\text{ ${units.p1}}`,
-        final_calculation: `\\frac{${p2}\\textcolor{red}{\\cancel{\\text{ ${
+        calculation_in_kelvin: `\\frac{${p2}\\textcolor{red}{\\cancel{\\text{ ${
           units.p2
-        }}}} \\times ${t1}\\text{ ${
-          units.t1
-        }}}{${p1}\\textcolor{red}{\\cancel{\\text{ ${units.p1}}}}} = ${(
-          (p2 * t1) /
-          p1
-        ).toFixed(2)}\\text{ ${units.t2}}`,
+        }}}} \\times ${t1Kelvin.toFixed(
+          2
+        )}\\text{ K}}{${p1}\\textcolor{red}{\\cancel{\\text{ ${
+          units.p1
+        }}}}} = ${t2ResultKelvin.toFixed(2)}\\text{ K}`,
+        ...(t2Conversion.conversionStep && {
+          conversion_to_original_unit: t2Conversion.conversionStep,
+        }),
       };
+    }
     default:
       return null;
   }
