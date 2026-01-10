@@ -1,4 +1,4 @@
-# Gas Law Simulation Web Application
+# Pump It! Gas Laws in Action Web Application
 
 An interactive web-based simulator for exploring and learning gas laws through dynamic visualizations and practical problem-solving.
 

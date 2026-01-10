@@ -21,8 +21,8 @@ export default function Docs_Accessibility() {
         <DocumentationSection
           id="accessibility-overview"
           title="Accessibility Features"
-          subtitle="Making Gas Law Simulation Accessible to All Users"
-          description="The Gas Law Simulation includes comprehensive accessibility features to ensure that all users, including those with disabilities, can effectively engage with and learn from the application."
+          subtitle="Making Pump It! Gas Laws in Action Accessible to All Users"
+          description="The Pump It! Gas Laws in Action includes comprehensive accessibility features to ensure that all users, including those with disabilities, can effectively engage with and learn from the application."
         />
 
         <Separator />

@@ -6,13 +6,13 @@ const navigationData = [
     title: "Introduction",
     url: "/docs",
     description:
-      "Discover the Gas Law Simulation app's core purpose and how it transforms complex gas behavior into interactive, easy-to-understand visualizations for students and enthusiasts.",
+      "Discover the Pump It! Gas Laws in Action app's core purpose and how it transforms complex gas behavior into interactive, easy-to-understand visualizations for students and enthusiasts.",
   },
   {
     title: "Simulation Basics",
     url: "/docs/simulation-basics",
     description:
-      "Explore the comprehensive toolset of the Gas Law Simulation, including interactive elements, real-time molecular visualization, and advanced simulation capabilities.",
+      "Explore the comprehensive toolset of the Pump It! Gas Laws in Action, including interactive elements, real-time molecular visualization, and advanced simulation capabilities.",
   },
   {
     title: "Parameters & Units",

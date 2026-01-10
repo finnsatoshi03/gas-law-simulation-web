@@ -9,7 +9,7 @@ import { Link } from "react-router-dom";
 export default function Documentation() {
   const pageSections = [
     { id: "overview", title: "Introduction" },
-    { id: "what-is", title: "What is the Gas Law Simulation?" },
+    { id: "what-is", title: "What is the Pump It! Gas Laws in Action?" },
     { id: "features", title: "Main Features" },
     { id: "how-to", title: "How to Use This Documentation" },
     { id: "quick-shortcuts", title: "Quick Shortcuts" },
@@ -21,16 +21,16 @@ export default function Documentation() {
         <DocumentationSection
           id="overview"
           title="Introduction"
-          subtitle="Welcome to the Gas Law Simulation Documentation!"
-          description="This guide is designed to help you navigate and maximize the features of the Gas Law Simulation app. Whether you're a student, educator, or enthusiast, this app provides an interactive way to explore and understand gas laws through real-time simulations."
+          subtitle="Welcome to the Pump It! Gas Laws in Action Documentation!"
+          description="This guide is designed to help you navigate and maximize the features of the Pump It! Gas Laws in Action app. Whether you're a student, educator, or enthusiast, this app provides an interactive way to explore and understand gas laws through real-time simulations."
         />
 
         <Separator />
 
         <DocumentationSection
           id="what-is"
-          title="What is the Gas Law Simulation?"
-          description="The Gas Law Simulation is an interactive tool that visually demonstrates how gases behave under different conditions. Users can manipulate variables such as pressure, volume, and temperature to observe their effects on gas molecules, enhancing their understanding of fundamental gas laws."
+          title="What is the Pump It! Gas Laws in Action?"
+          description="The Pump It! Gas Laws in Action is an interactive tool that visually demonstrates how gases behave under different conditions. Users can manipulate variables such as pressure, volume, and temperature to observe their effects on gas molecules, enhancing their understanding of fundamental gas laws."
         />
 
         <Separator />
@@ -41,7 +41,7 @@ export default function Documentation() {
             <h2 className="font-bold">Description</h2>
             <Separator className=" col-span-2" />
 
-            <p className="text-sm md:text-base">Gas Law Simulations</p>
+            <p className="text-sm md:text-base">Pump It! Gas Laws in Action</p>
             <p className="text-sm md:text-base">
               Explore Boyle's Law, Charles' Law, and the Ideal Gas Law
               interactively. Adjust pressure, volume, and temperature to see

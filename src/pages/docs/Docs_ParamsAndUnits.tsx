@@ -24,7 +24,7 @@ export default function Docs_ParamsAndUnits() {
           id="parameters-overview"
           title="Parameters and Units"
           subtitle="Mastering Gas Law Calculations"
-          description="A comprehensive guide to understanding parameters, unit conversions, and calculation dynamics in the Gas Law Simulation."
+          description="A comprehensive guide to understanding parameters, unit conversions, and calculation dynamics in the Pump It! Gas Laws in Action."
         />
 
         <Separator />
@@ -35,7 +35,7 @@ export default function Docs_ParamsAndUnits() {
         >
           <div className="space-y-4 text-sm md:text-base">
             <p>
-              The Gas Law Simulation provides seamless, real-time unit
+              The Pump It! Gas Laws in Action provides seamless, real-time unit
               conversions across four key measurement types:
             </p>
 

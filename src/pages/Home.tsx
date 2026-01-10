@@ -525,9 +525,9 @@ export default function Home() {
 
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-6 z-10 space-y-2">
           <h1 className="text-5xl md:text-7xl uppercase font-sciFi text-center font-black">
-            Gas Law
+            Pump it!
             <br />
-            Simulation
+            Gas Laws in Action
           </h1>
           <p className="text-center text-sm md:text-base">
             Explore the fascinating behavior of gas molecules under different

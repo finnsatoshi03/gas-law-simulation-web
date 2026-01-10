@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 export default function Docs_SimulationBasics() {
   const pageSections = [
     { id: "simulation", title: "Simulation Basics" },
-    { id: "gas-law-simulation", title: "Gas Law Simulation" },
+    { id: "gas-law-simulation", title: "Pump It! Gas Laws in Action" },
     { id: "gas-tanks", title: "Gas Selection Tanks" },
     { id: "air-pump", title: "Air Pump" },
     { id: "barometer", title: "Barometer Visualization" },
@@ -24,22 +24,22 @@ export default function Docs_SimulationBasics() {
         <DocumentationSection
           id="simulation"
           title="Simulation Basics"
-          subtitle="Mastering the Gas Law Simulation Interface"
-          description="This guide provides a comprehensive walkthrough of the Gas Law Simulation's key components and interactions. Whether you're a student, educator, or science enthusiast, this documentation will help you navigate and understand the simulation's features."
+          subtitle="Mastering the Pump It! Gas Laws in Action Interface"
+          description="This guide provides a comprehensive walkthrough of the Pump It! Gas Laws in Action's key components and interactions. Whether you're a student, educator, or science enthusiast, this documentation will help you navigate and understand the simulation's features."
         />
 
         <Separator />
 
         <DocumentationSection
           id="gas-law-simulation"
-          title="Gas Law Simulation"
+          title="Pump It! Gas Laws in Action"
         >
           <div className="space-y-4 text-sm md:text-base">
             <p>
-              The Gas Law Simulation is an interactive tool designed to help
-              users explore and understand fundamental gas behaviors through
-              dynamic visualizations. It supports multiple gas laws including
-              Boyle's Law, Charles' Law, and the Ideal Gas Law.
+              The Pump It! Gas Laws in Action is an interactive tool designed to
+              help users explore and understand fundamental gas behaviors
+              through dynamic visualizations. It supports multiple gas laws
+              including Boyle's Law, Charles' Law, and the Ideal Gas Law.
             </p>
 
             <h3 className="text-lg font-semibold mt-4">Key Features:</h3>

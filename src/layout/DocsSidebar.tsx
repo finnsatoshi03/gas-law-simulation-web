@@ -26,7 +26,7 @@ const data = {
           url: "/docs#overview",
         },
         {
-          title: "What is the Gas Law Simulation?",
+          title: "What is the Pump It! Gas Laws in Action?",
           url: "/docs#what-is",
         },
         {
@@ -44,7 +44,7 @@ const data = {
       url: "/docs/simulation-basics#",
       items: [
         {
-          title: "Gas Law Simulations",
+          title: "Pump It! Gas Laws in Action Simulations",
           url: "/docs/simulation-basics#simulations",
         },
         {

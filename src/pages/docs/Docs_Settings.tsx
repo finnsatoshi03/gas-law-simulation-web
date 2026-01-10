@@ -27,7 +27,7 @@ export default function Docs_Settings() {
         <DocumentationSection
           id="settings-overview"
           title="Settings Page"
-          subtitle="Comprehensive Configuration for Gas Law Simulation"
+          subtitle="Comprehensive Configuration for Pump It! Gas Laws in Action"
           description="A detailed guide to understanding and customizing your gas law simulation experience."
         />
 
