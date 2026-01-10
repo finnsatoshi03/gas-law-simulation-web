@@ -41,12 +41,17 @@ import {
 const GRAPH_COLORS = {
   curve: "#6366f1", // Indigo
   curveGradient: "url(#curveGradient)",
-  initialPoint: "#22c55e", // Green
-  finalPoint: "#f97316", // Orange
+  initialPoint: "#22c55e", // Green - for initial state
+  finalPoint: "#f97316", // Orange - for final state
   grid: "#e5e7eb",
   axis: "#374151",
   background: "#fafafa",
 };
+
+// Laws that show comparison between initial and final states
+// Note: For these laws, initial and final states share the same curve (k is constant)
+// We'll show both points clearly on the same curve with enhanced visualization
+const COMPARISON_LAWS = ["boyles", "charles", "lussac", "avogadros"];
 
 interface GraphConfig {
   xLabel: string;
@@ -316,6 +321,13 @@ const GasLawGraph: React.FC<GasLawGraphProps> = ({
     [lawType, values, units, result, graphMode]
   );
 
+  // Check if this is a comparison law (shows initial vs final)
+  const isComparisonLaw = COMPARISON_LAWS.includes(lawType);
+
+  // For comparison laws, check if we have both initial and final states
+  const hasBothStates =
+    isComparisonLaw && !!statePoints.initial && !!statePoints.final;
+
   const graphData = useMemo(() => {
     if (!hasData || !constantInfo || constantInfo.value <= 0) {
       return [];
@@ -557,27 +569,27 @@ const GasLawGraph: React.FC<GasLawGraphProps> = ({
                   isAnimationActive={false}
                 />
 
-                {/* Initial state point */}
+                {/* Initial state point - larger and more prominent for comparison laws */}
                 {statePoints.initial && (
                   <ReferenceDot
                     x={statePoints.initial.x}
                     y={statePoints.initial.y}
-                    r={8}
+                    r={hasBothStates ? 12 : 8}
                     fill={GRAPH_COLORS.initialPoint}
                     stroke="#fff"
-                    strokeWidth={2}
+                    strokeWidth={hasBothStates ? 3 : 2}
                   />
                 )}
 
-                {/* Final state point */}
+                {/* Final state point - larger and more prominent for comparison laws */}
                 {statePoints.final && (
                   <ReferenceDot
                     x={statePoints.final.x}
                     y={statePoints.final.y}
-                    r={8}
+                    r={hasBothStates ? 12 : 8}
                     fill={GRAPH_COLORS.finalPoint}
                     stroke="#fff"
-                    strokeWidth={2}
+                    strokeWidth={hasBothStates ? 3 : 2}
                   />
                 )}
 
@@ -589,21 +601,41 @@ const GasLawGraph: React.FC<GasLawGraphProps> = ({
                       {statePoints.initial && (
                         <div className="flex items-center gap-2">
                           <div
-                            className="w-3 h-3 rounded-full"
+                            className="w-4 h-4 rounded-full border-2 border-white shadow-md"
                             style={{
                               backgroundColor: GRAPH_COLORS.initialPoint,
                             }}
                           />
-                          <span className="text-gray-600">Initial State</span>
+                          <span className="text-gray-700 font-medium">
+                            Initial State
+                            {hasBothStates && statePoints.initial && (
+                              <span className="text-gray-500 text-xs ml-1">
+                                ({config.xVariable}=
+                                {statePoints.initial.x.toFixed(1)},{" "}
+                                {config.yVariable}=
+                                {statePoints.initial.y.toFixed(1)})
+                              </span>
+                            )}
+                          </span>
                         </div>
                       )}
                       {statePoints.final && (
                         <div className="flex items-center gap-2">
                           <div
-                            className="w-3 h-3 rounded-full"
+                            className="w-4 h-4 rounded-full border-2 border-white shadow-md"
                             style={{ backgroundColor: GRAPH_COLORS.finalPoint }}
                           />
-                          <span className="text-gray-600">Final State</span>
+                          <span className="text-gray-700 font-medium">
+                            Final State
+                            {hasBothStates && statePoints.final && (
+                              <span className="text-gray-500 text-xs ml-1">
+                                ({config.xVariable}=
+                                {statePoints.final.x.toFixed(1)},{" "}
+                                {config.yVariable}=
+                                {statePoints.final.y.toFixed(1)})
+                              </span>
+                            )}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -612,6 +644,30 @@ const GasLawGraph: React.FC<GasLawGraphProps> = ({
               </LineChart>
             </ResponsiveContainer>
           </div>
+
+          {/* Educational note for comparison laws */}
+          {hasBothStates && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm">
+              <p className="text-amber-800">
+                <span className="font-semibold">📚 Learning tip:</span> Both
+                points lie on the{" "}
+                <span className="font-semibold">same curve</span> because the
+                constant{" "}
+                <span className="font-mono bg-amber-100 px-1 rounded">
+                  k = {constantInfo?.value.toFixed(2)}
+                </span>{" "}
+                remains unchanged. The gas moves along this curve from the{" "}
+                <span className="text-green-600 font-semibold">
+                  initial state
+                </span>{" "}
+                to the{" "}
+                <span className="text-orange-600 font-semibold">
+                  final state
+                </span>
+                .
+              </p>
+            </div>
+          )}
 
           {/* Relationship description */}
           <div className="text-center bg-gray-50 rounded-lg px-4 py-3">
