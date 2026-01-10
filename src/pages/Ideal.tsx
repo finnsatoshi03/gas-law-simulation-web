@@ -13,6 +13,7 @@ import SimulationControlSelector, {
   ControlType,
   ValueType,
 } from "@/components/model/SimulationControlSelector";
+import { GasLawGraph } from "@/components/graphs";
 
 export default function Ideal() {
   const { result } = useGasLaw();
@@ -34,7 +35,6 @@ export default function Ideal() {
     pressure: "initial",
     pump: "initial",
   });
-
   const handleSimulationVolumeChange = (volume: number) => {
     // Round to 2 decimal places for better UX
     const roundedVolume = Math.round(volume * 100) / 100;
@@ -153,6 +153,12 @@ export default function Ideal() {
           result={result ?? undefined}
           values={values}
           units={units}
+        />
+        <GasLawGraph
+          lawType="ideal"
+          values={values}
+          units={units}
+          result={result}
         />
         <ProblemsSlide type="ideal" />
       </div>

@@ -14,6 +14,7 @@ import SimulationControlSelector, {
   ControlType,
   ValueType,
 } from "@/components/model/SimulationControlSelector";
+import { GasLawGraph } from "@/components/graphs";
 
 export default function Lussac() {
   const { result } = useGasLaw();
@@ -155,6 +156,12 @@ export default function Lussac() {
           result={result ?? undefined}
           values={values}
           units={units}
+        />
+        <GasLawGraph
+          lawType="gayLussac"
+          values={values}
+          units={units}
+          result={result}
         />
         <ProblemsSlide type="gay-lussac" />
       </div>

@@ -13,6 +13,7 @@ import SimulationControlSelector, {
   ControlType,
   ValueType,
 } from "@/components/model/SimulationControlSelector";
+import { GasLawGraph } from "@/components/graphs";
 
 export default function Avogadros() {
   const { result } = useGasLaw();
@@ -134,6 +135,12 @@ export default function Avogadros() {
           result={result ?? undefined}
           values={values}
           units={units}
+        />
+        <GasLawGraph
+          lawType="avogadro"
+          values={values}
+          units={units}
+          result={result}
         />
         <ProblemsSlide type="avogadros" />
       </div>

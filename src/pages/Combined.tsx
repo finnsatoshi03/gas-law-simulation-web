@@ -13,6 +13,7 @@ import SimulationControlSelector, {
   ControlType,
   ValueType,
 } from "@/components/model/SimulationControlSelector";
+import { GasLawGraph } from "@/components/graphs";
 
 export default function Combined() {
   const { result } = useGasLaw();
@@ -40,7 +41,6 @@ export default function Combined() {
     pressure: "initial",
     pump: "initial",
   });
-
   const handleSimulationVolumeChange = (
     volume: number,
     target: "initial" | "final"
@@ -180,6 +180,12 @@ export default function Combined() {
           result={result ?? undefined}
           values={values}
           units={units}
+        />
+        <GasLawGraph
+          lawType="combined"
+          values={values}
+          units={units}
+          result={result}
         />
         <ProblemsSlide type="combined" />
       </div>

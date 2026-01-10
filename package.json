@@ -42,6 +42,7 @@
     "react-router-dom": "^6.30.0",
     "react-text-to-speech": "^0.19.3",
     "react-use": "^17.6.0",
+    "recharts": "^3.6.0",
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2",

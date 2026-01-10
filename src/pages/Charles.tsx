@@ -13,6 +13,7 @@ import SimulationControlSelector, {
   ControlType,
   ValueType,
 } from "@/components/model/SimulationControlSelector";
+import { GasLawGraph } from "@/components/graphs";
 
 export default function Charles() {
   const { result } = useGasLaw();
@@ -151,6 +152,12 @@ export default function Charles() {
           result={result ?? undefined}
           values={values}
           units={units}
+        />
+        <GasLawGraph
+          lawType="charles"
+          values={values}
+          units={units}
+          result={result}
         />
         <ProblemsSlide type="charles" />
       </div>
