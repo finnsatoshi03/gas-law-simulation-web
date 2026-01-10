@@ -168,7 +168,7 @@ export function Navbar() {
                   )}
                   onClick={() => setIsOpen(false)}
                 >
-                  Documentation
+                  About the App
                 </Link>
 
                 <Link
@@ -274,7 +274,7 @@ export function Navbar() {
                   isActive("/docs") ? "font-bold" : ""
                 )}
               >
-                Documentation
+                About the App
               </NavigationMenuLink>
             </Link>
           </NavigationMenuItem>

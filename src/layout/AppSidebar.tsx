@@ -100,7 +100,7 @@ export function AppSidebar() {
               to="/docs"
             >
               <File className="size-4" />
-              <span className="truncate font-semibold">Documentation</span>
+              <span className="truncate font-semibold">About the App</span>
             </Link>
           </SidebarMenuButton>
           <SidebarMenuButton

@@ -255,7 +255,7 @@ export function DocsSidebar({
                   <GalleryVerticalEnd className="size-4" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-semibold">Documentation</span>
+                  <span className="font-semibold">About the App</span>
                   <span className="text-xs">v1.0.0</span>
                 </div>
               </Link>

@@ -650,6 +650,9 @@ export default function Home() {
               Start Guide
             </Button>
             <Button className="w-32 md:w-56 z-10">
+              <Link to="/docs">About the App</Link>
+            </Button>
+            <Button className="w-32 md:w-56 z-10">
               <Link to="/settings">Settings</Link>
             </Button>
             <Button
