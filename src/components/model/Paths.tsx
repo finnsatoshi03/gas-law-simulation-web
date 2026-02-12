@@ -155,7 +155,7 @@ export const Oxygen = () => {
         <rect className="cls-3" x="567.4" y="597.6" width="13.6" height="5.1" />
         <text
           className="st22 st6 st23"
-          transform="matrix(1 0 0 1 602.5764 681.4803)"
+          transform="matrix(1 0 0 1 602.5764 707.8611)"
         >
           2
         </text>
