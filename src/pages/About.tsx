@@ -32,6 +32,44 @@ export default function About() {
           update to reflect your changes.
         </p>
 
+        <h3 className="text-xl font-semibold mt-6">
+          Curriculum Alignment
+        </h3>
+        <p>
+          The Pump It! Gas Laws in Action simulation is designed in alignment
+          with the K–12 Science Curriculum for Grade 11 Chemistry. By using
+          this application, students will be able to achieve the required
+          learning competencies through interactive and visual exploration of
+          gas laws concepts.
+        </p>
+        <p>Specifically, by using this app, students will be able to:</p>
+        <ul className="list-disc pl-6 space-y-2">
+          <li>Define gas pressure and identify its common units</li>
+          <li>
+            Explain the relationships described in Boyle's Law, Charles's Law,
+            Avogadro's Law, Gay-Lussac's Law, and the Combined Gas Law
+          </li>
+          <li>
+            Manipulate variables such as pressure, volume, and temperature to
+            observe their effects on gas behavior
+          </li>
+          <li>
+            Apply gas law equations to solve problems involving pressure,
+            volume, and temperature
+          </li>
+          <li>
+            Use the Ideal Gas Law to determine the properties and amount of gas
+            under given conditions
+          </li>
+        </ul>
+        <p>
+          Through these interactive features, the simulation allows students to
+          move beyond abstract understanding and develop a deeper conceptual
+          and procedural knowledge of gas laws. This ensures that the tool
+          supports competency-based learning and is aligned with the standards
+          set by the K–12 curriculum.
+        </p>
+
         <h3 className="text-xl font-semibold mt-6">About the Owner</h3>
         <div>
           <p className="font-bold">Romaric Bucayu</p>
