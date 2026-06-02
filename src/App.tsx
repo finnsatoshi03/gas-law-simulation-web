@@ -10,6 +10,7 @@ import { AnimatePresence } from "framer-motion";
 import { GasLawProvider } from "./contexts/GasLawProvider";
 import { WallCollisionProvider } from "./contexts/WallCollissionProvider";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ProfileProvider } from "./contexts/ProfileContext";
 import { SimulationSettingsProvider } from "./contexts/SettingsProvider";
 import { AccessibilityProvider } from "./contexts/AccessibilityProvider";
 
@@ -41,15 +42,31 @@ import { PublicOnlyRoute } from "./components/auth/PublicOnlyRoute";
 import { PasswordRecoveryRoute } from "./components/auth/PasswordRecoveryRoute";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { MoleculeBackground } from "./components/MoleculeBackground";
+import { AccountStatusRoute } from "./components/account/AccountStatusRoute";
+import {
+  PendingApprovalPage,
+  ProfileErrorPage,
+  RejectedAccountPage,
+  SuspendedAccountPage,
+} from "./components/account/AccountStatusPages";
+import { ACCOUNT_STATUS } from "./lib/account-status";
 import PageTransition from "./components/PageTransition";
 import { WalkthroughProvider } from "./contexts/WalkthroughProvider";
 import WalkthroughWrapper from "./components/WalkthroughWrapper";
 
 const AUTH_ROUTES = ["/login", "/signup", "/forgot-password", "/reset-password"];
+const ACCOUNT_STATUS_ROUTES = [
+  "/account/pending",
+  "/account/suspended",
+  "/account/rejected",
+  "/account/profile-error",
+];
 
 const AnimatedRoutes = () => {
   const location = useLocation();
-  const isAuthRoute = AUTH_ROUTES.includes(location.pathname);
+  const isAuthRoute = [...AUTH_ROUTES, ...ACCOUNT_STATUS_ROUTES].includes(
+    location.pathname
+  );
 
   return (
     <>
@@ -153,6 +170,38 @@ const AnimatedRoutes = () => {
             </PasswordRecoveryRoute>
           }
         />
+        <Route
+          path="account/pending"
+          element={
+            <AccountStatusRoute expectedStatus={ACCOUNT_STATUS.PENDING}>
+              <PendingApprovalPage />
+            </AccountStatusRoute>
+          }
+        />
+        <Route
+          path="account/suspended"
+          element={
+            <AccountStatusRoute expectedStatus={ACCOUNT_STATUS.SUSPENDED}>
+              <SuspendedAccountPage />
+            </AccountStatusRoute>
+          }
+        />
+        <Route
+          path="account/rejected"
+          element={
+            <AccountStatusRoute expectedStatus={ACCOUNT_STATUS.REJECTED}>
+              <RejectedAccountPage />
+            </AccountStatusRoute>
+          }
+        />
+        <Route
+          path="account/profile-error"
+          element={
+            <AccountStatusRoute profileIssue>
+              <ProfileErrorPage />
+            </AccountStatusRoute>
+          }
+        />
         <Route path="*" element={<Navigate replace to="/home" />} />
       </Routes>
       </AnimatePresence>
@@ -163,19 +212,21 @@ const AnimatedRoutes = () => {
 export default function App() {
   return (
     <AuthProvider>
-      <AccessibilityProvider>
-        <WalkthroughProvider>
-          <GasLawProvider>
-            <WallCollisionProvider>
-              <SimulationSettingsProvider>
-                <HashRouter>
-                  <AnimatedRoutes />
-                </HashRouter>
-              </SimulationSettingsProvider>
-            </WallCollisionProvider>
-          </GasLawProvider>
-        </WalkthroughProvider>
-      </AccessibilityProvider>
+      <ProfileProvider>
+        <AccessibilityProvider>
+          <WalkthroughProvider>
+            <GasLawProvider>
+              <WallCollisionProvider>
+                <SimulationSettingsProvider>
+                  <HashRouter>
+                    <AnimatedRoutes />
+                  </HashRouter>
+                </SimulationSettingsProvider>
+              </WallCollisionProvider>
+            </GasLawProvider>
+          </WalkthroughProvider>
+        </AccessibilityProvider>
+      </ProfileProvider>
     </AuthProvider>
   );
 }

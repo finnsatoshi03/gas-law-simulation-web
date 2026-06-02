@@ -2,7 +2,11 @@ import { Loader2 } from "lucide-react";
 
 import { MoleculeBackground } from "@/components/MoleculeBackground";
 
-export const AuthLoading = () => (
+export const AuthLoading = ({
+  message = "Checking your session...",
+}: {
+  message?: string;
+}) => (
   <main className="relative grid min-h-screen place-items-center overflow-hidden p-6">
     <MoleculeBackground className="absolute inset-0" />
     <div className="relative z-[1] flex flex-col items-center gap-4 text-center">
@@ -14,7 +18,7 @@ export const AuthLoading = () => (
       </div>
       <div className="flex items-center gap-2 text-[14px] font-medium text-[#c9c5e4]">
         <Loader2 className="size-4 animate-spin" />
-        Checking your session...
+        {message}
       </div>
     </div>
   </main>
