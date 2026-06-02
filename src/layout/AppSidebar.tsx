@@ -7,10 +7,11 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 
-import { Cylinder, File, LogOut, Settings } from "lucide-react";
+import { Cylinder, File, Loader2, LogOut, Settings } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { NavMain } from "./NavMain";
 import { ExitDialog } from "@/components/ExitDialog";
+import { useLogout } from "@/hooks/use-logout";
 
 const navMain = [
   {
@@ -51,6 +52,7 @@ export function AppSidebar() {
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [rememberChoice, setRememberChoice] = useState(false);
   const location = useLocation();
+  const { handleLogout, isLoggingOut } = useLogout();
 
   const handleCloseApp = () => {
     const storedPreference = localStorage.getItem("exitWithoutConfirm");
@@ -125,6 +127,22 @@ export function AppSidebar() {
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-semibold">Exit App</span>
             </div>
+          </SidebarMenuButton>
+          <SidebarMenuButton
+            size="sm"
+            aria-busy={isLoggingOut}
+            disabled={isLoggingOut}
+            onClick={handleLogout}
+            className="settings-nav-item text-red-600 hover:bg-red-50 hover:text-red-700 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+          >
+            {isLoggingOut ? (
+              <Loader2 className="size-4 shrink-0 animate-spin" />
+            ) : (
+              <LogOut className="size-4 shrink-0" />
+            )}
+            <span className="truncate font-semibold">
+              {isLoggingOut ? "Logging out..." : "Log out"}
+            </span>
           </SidebarMenuButton>
         </SidebarFooter>
       </Sidebar>

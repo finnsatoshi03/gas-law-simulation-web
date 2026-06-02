@@ -34,31 +34,56 @@ import Docs_Settings from "./pages/docs/Docs_Settings";
 import Docs_Accessibility from "./pages/docs/Docs_Accessibility";
 
 import { Login } from "./components/auth/Login";
-// import { ProtectedRoute } from "./components/ProtectedRoute";
+import { SignUp } from "./components/auth/SignUp";
+import { ForgotPassword } from "./components/auth/ForgotPassword";
+import { ResetPassword } from "./components/auth/ResetPassword";
+import { PublicOnlyRoute } from "./components/auth/PublicOnlyRoute";
+import { PasswordRecoveryRoute } from "./components/auth/PasswordRecoveryRoute";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { MoleculeBackground } from "./components/MoleculeBackground";
 import PageTransition from "./components/PageTransition";
 import { WalkthroughProvider } from "./contexts/WalkthroughProvider";
 import WalkthroughWrapper from "./components/WalkthroughWrapper";
 
+const AUTH_ROUTES = ["/login", "/signup", "/forgot-password", "/reset-password"];
+
 const AnimatedRoutes = () => {
   const location = useLocation();
+  const isAuthRoute = AUTH_ROUTES.includes(location.pathname);
 
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
+    <>
+      {/* Persistent across auth-page switches: rendered outside the keyed
+          <Routes> so navigating login → signup → … does not remount it and the
+          molecule animation stays continuous. */}
+      {isAuthRoute ? (
+        <MoleculeBackground className="fixed inset-0 z-0" />
+      ) : null}
+
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
         <Route index element={<Navigate replace to="home" />} />
 
         <Route
           path="home"
           element={
-            <WalkthroughWrapper>
-              <PageTransition>
-                <Home />
-              </PageTransition>
-            </WalkthroughWrapper>
+            <ProtectedRoute>
+              <WalkthroughWrapper>
+                <PageTransition>
+                  <Home />
+                </PageTransition>
+              </WalkthroughWrapper>
+            </ProtectedRoute>
           }
         />
 
-        <Route element={<DocsLayout />}>
+        <Route
+          element={
+            <ProtectedRoute>
+              <DocsLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route path="docs" element={<Documentation />} />
           <Route
             path="docs/simulation-basics"
@@ -81,7 +106,13 @@ const AnimatedRoutes = () => {
           <Route path="docs/accessibility" element={<Docs_Accessibility />} />
         </Route>
 
-        <Route element={<AppLayout />}>
+        <Route
+          element={
+            <ProtectedRoute>
+              <AppLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route path="boyles" element={<Boyles />} />
           <Route path="charles" element={<Charles />} />
           <Route path="lussac" element={<Lussac />} />
@@ -90,9 +121,42 @@ const AnimatedRoutes = () => {
           <Route path="ideal" element={<Ideal />} />
           <Route path="settings" element={<Settings />} />
         </Route>
-        <Route path="/login" element={<Login />} />
+        <Route
+          path="login"
+          element={
+            <PublicOnlyRoute>
+              <Login />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path="signup"
+          element={
+            <PublicOnlyRoute>
+              <SignUp />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path="forgot-password"
+          element={
+            <PublicOnlyRoute>
+              <ForgotPassword />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path="reset-password"
+          element={
+            <PasswordRecoveryRoute>
+              <ResetPassword />
+            </PasswordRecoveryRoute>
+          }
+        />
+        <Route path="*" element={<Navigate replace to="/home" />} />
       </Routes>
-    </AnimatePresence>
+      </AnimatePresence>
+    </>
   );
 };
 

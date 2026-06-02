@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { AccessibilityButton } from "@/components/AccessibilityButton";
 import { useWalkthrough } from "@/contexts/WalkthroughProvider";
 import TourResumeDialog from "@/components/TourResumeDialog";
+import { LogoutButton } from "@/components/auth/LogoutButton";
 
 interface MoleculeType {
   type: string;
@@ -655,6 +656,10 @@ export default function Home() {
             <Button className="w-32 md:w-56 z-10">
               <Link to="/settings">Settings</Link>
             </Button>
+            <LogoutButton
+              variant="destructive"
+              className="w-32 justify-center md:w-56 z-10"
+            />
             <Button
               className="w-32 md:w-56 z-10 hidden"
               variant="destructive"

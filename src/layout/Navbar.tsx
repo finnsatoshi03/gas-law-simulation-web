@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/accordion";
 import { ExitDialog } from "@/components/ExitDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { LogoutButton } from "@/components/auth/LogoutButton";
 
 const navMain = [
   {
@@ -181,6 +182,7 @@ export function Navbar() {
                 >
                   Settings
                 </Link>
+                <LogoutButton className="w-full justify-start px-4" />
               </div>
 
               <button
@@ -313,6 +315,9 @@ export function Navbar() {
                 <span className="truncate font-semibold">Exit App</span>
               </div>
             </NavigationMenuLink>
+          </NavigationMenuItem>
+          <NavigationMenuItem>
+            <LogoutButton className="h-10" />
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
