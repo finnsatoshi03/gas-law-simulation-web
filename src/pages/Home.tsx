@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ShieldCheck } from "lucide-react";
 
 import { GAS_LAWS } from "@/lib/constants";
 
@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { AccessibilityButton } from "@/components/AccessibilityButton";
 import { useWalkthrough } from "@/contexts/WalkthroughProvider";
 import TourResumeDialog from "@/components/TourResumeDialog";
+import { useProfile } from "@/contexts/ProfileContext";
+import { canAccess, PERMISSION } from "@/lib/permissions";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 
 interface MoleculeType {
@@ -87,6 +89,11 @@ const BASE_TEMPERATURE = 293;
 
 export default function Home() {
   const navigate = useNavigate();
+  const { profile } = useProfile();
+  const canAccessAdmin = canAccess(
+    profile,
+    PERMISSION.ACCESS_ADMIN_DASHBOARD
+  );
   const {
     setState,
     getStoredProgress,
@@ -656,6 +663,14 @@ export default function Home() {
             <Button className="w-32 md:w-56 z-10">
               <Link to="/settings">Settings</Link>
             </Button>
+            {canAccessAdmin ? (
+              <Button asChild className="w-32 md:w-56 z-10" variant="secondary">
+                <Link to="/admin">
+                  <ShieldCheck className="size-4" />
+                  Admin
+                </Link>
+              </Button>
+            ) : null}
             <LogoutButton
               variant="destructive"
               className="w-32 justify-center md:w-56 z-10"

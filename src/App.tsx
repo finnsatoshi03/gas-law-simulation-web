@@ -25,6 +25,8 @@ import Avogadros from "./pages/Avogadros";
 import Combined from "./pages/Combined";
 import Ideal from "./pages/Ideal";
 import Settings from "./pages/Settings";
+import AccessDenied from "./pages/AccessDenied";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import Documentation from "./pages/docs/Documentation";
 import Docs_SimulationBasics from "./pages/docs/Docs_SimulationBasics";
 import Docs_ParamsAndUnits from "./pages/docs/Docs_ParamsAndUnits";
@@ -50,6 +52,7 @@ import {
   SuspendedAccountPage,
 } from "./components/account/AccountStatusPages";
 import { ACCOUNT_STATUS } from "./lib/account-status";
+import { AdminRoute } from "./components/admin/AdminRoute";
 import PageTransition from "./components/PageTransition";
 import { WalkthroughProvider } from "./contexts/WalkthroughProvider";
 import WalkthroughWrapper from "./components/WalkthroughWrapper";
@@ -137,6 +140,15 @@ const AnimatedRoutes = () => {
           <Route path="combined" element={<Combined />} />
           <Route path="ideal" element={<Ideal />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="access-denied" element={<AccessDenied />} />
+          <Route
+            path="admin"
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            }
+          />
         </Route>
         <Route
           path="login"

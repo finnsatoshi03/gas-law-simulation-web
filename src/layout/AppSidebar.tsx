@@ -7,11 +7,20 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 
-import { Cylinder, File, Loader2, LogOut, Settings } from "lucide-react";
+import {
+  Cylinder,
+  File,
+  Loader2,
+  LogOut,
+  Settings,
+  ShieldCheck,
+} from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { NavMain } from "./NavMain";
 import { ExitDialog } from "@/components/ExitDialog";
 import { useLogout } from "@/hooks/use-logout";
+import { useProfile } from "@/contexts/ProfileContext";
+import { canAccess, PERMISSION } from "@/lib/permissions";
 
 const navMain = [
   {
@@ -53,6 +62,11 @@ export function AppSidebar() {
   const [rememberChoice, setRememberChoice] = useState(false);
   const location = useLocation();
   const { handleLogout, isLoggingOut } = useLogout();
+  const { profile } = useProfile();
+  const canAccessAdmin = canAccess(
+    profile,
+    PERMISSION.ACCESS_ADMIN_DASHBOARD
+  );
 
   const handleCloseApp = () => {
     const storedPreference = localStorage.getItem("exitWithoutConfirm");
@@ -92,6 +106,21 @@ export function AppSidebar() {
           <NavMain items={navMain} />
         </SidebarContent>
         <SidebarFooter>
+          {canAccessAdmin ? (
+            <SidebarMenuButton
+              size="sm"
+              className="settings-nav-item data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              isActive={location.pathname === "/admin"}
+            >
+              <Link
+                className="flex-1 flex gap-2 items-center text-left text-sm leading-tight"
+                to="/admin"
+              >
+                <ShieldCheck className="size-4" />
+                <span className="truncate font-semibold">Admin dashboard</span>
+              </Link>
+            </SidebarMenuButton>
+          ) : null}
           <SidebarMenuButton
             size="sm"
             className="settings-nav-item data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"

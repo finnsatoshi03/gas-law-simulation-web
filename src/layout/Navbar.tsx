@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Cylinder, LogOut, Menu } from "lucide-react";
+import { Cylinder, LogOut, Menu, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocation, Link } from "react-router-dom";
 import {
@@ -21,6 +21,8 @@ import {
 import { ExitDialog } from "@/components/ExitDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { LogoutButton } from "@/components/auth/LogoutButton";
+import { useProfile } from "@/contexts/ProfileContext";
+import { canAccess, PERMISSION } from "@/lib/permissions";
 
 const navMain = [
   {
@@ -61,6 +63,11 @@ export function Navbar() {
   const [rememberChoice, setRememberChoice] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { profile } = useProfile();
+  const canAccessAdmin = canAccess(
+    profile,
+    PERMISSION.ACCESS_ADMIN_DASHBOARD
+  );
 
   const isActive = (url: string) => {
     return location.pathname === url;
@@ -182,6 +189,19 @@ export function Navbar() {
                 >
                   Settings
                 </Link>
+                {canAccessAdmin ? (
+                  <Link
+                    to="/admin"
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg px-4 py-2 transition-colors",
+                      isActive("/admin") ? "bg-zinc-100 font-semibold" : ""
+                    )}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <ShieldCheck className="size-4" />
+                    Admin dashboard
+                  </Link>
+                ) : null}
                 <LogoutButton className="w-full justify-start px-4" />
               </div>
 
@@ -302,6 +322,28 @@ export function Navbar() {
               </NavigationMenuLink>
             </Link>
           </NavigationMenuItem>
+          {canAccessAdmin ? (
+            <NavigationMenuItem
+              className={
+                isActive("/admin")
+                  ? "bg-zinc-100 rounded-lg focus:bg-none"
+                  : ""
+              }
+            >
+              <Link to="/admin">
+                <NavigationMenuLink
+                  className={cn(
+                    navigationMenuTriggerStyle(),
+                    "gap-2",
+                    isActive("/admin") ? "font-bold" : ""
+                  )}
+                >
+                  <ShieldCheck className="size-4" />
+                  Admin
+                </NavigationMenuLink>
+              </Link>
+            </NavigationMenuItem>
+          ) : null}
 
           <NavigationMenuItem onClick={handleCloseApp}>
             <NavigationMenuLink

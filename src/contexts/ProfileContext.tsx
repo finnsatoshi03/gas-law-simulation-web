@@ -11,6 +11,7 @@ import {
 
 import { useAuth } from "@/contexts/AuthContext";
 import { AccountStatus, isAccountStatus } from "@/lib/account-status";
+import { AppRole, isAppRole } from "@/lib/permissions";
 import { getSupabaseClient } from "@/lib/supabase";
 
 interface ProfileRow {
@@ -18,7 +19,7 @@ interface ProfileRow {
   auth_user_id: string;
   email: string | null;
   full_name: string | null;
-  role: string;
+  role: unknown;
   status: unknown;
   created_at: string;
   updated_at: string;
@@ -30,7 +31,7 @@ export interface UserProfile {
   authUserId: string;
   email: string | null;
   fullName: string | null;
-  role: string;
+  role: AppRole;
   status: AccountStatus;
   createdAt: string;
   updatedAt: string;
@@ -50,7 +51,7 @@ const PROFILE_SELECT =
 const ProfileContext = createContext<ProfileContextType | null>(null);
 
 const mapProfile = (row: ProfileRow): UserProfile | null => {
-  if (!isAccountStatus(row.status)) {
+  if (!isAccountStatus(row.status) || !isAppRole(row.role)) {
     return null;
   }
 
@@ -69,6 +70,7 @@ const mapProfile = (row: ProfileRow): UserProfile | null => {
 
 export const ProfileProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
+  const userId = user?.id ?? null;
   const requestIdRef = useRef(0);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +81,7 @@ export const ProfileProvider = ({ children }: { children: ReactNode }) => {
     const requestId = requestIdRef.current + 1;
     requestIdRef.current = requestId;
 
-    if (!user) {
+    if (!userId) {
       setProfile(null);
       setError(null);
       setLoadedUserId(null);
@@ -94,7 +96,7 @@ export const ProfileProvider = ({ children }: { children: ReactNode }) => {
       const { data, error: profileError } = await getSupabaseClient()
         .from("profiles")
         .select(PROFILE_SELECT)
-        .eq("auth_user_id", user.id)
+        .eq("auth_user_id", userId)
         .maybeSingle();
 
       if (requestIdRef.current !== requestId) {
@@ -135,25 +137,59 @@ export const ProfileProvider = ({ children }: { children: ReactNode }) => {
       );
     } finally {
       if (requestIdRef.current === requestId) {
-        setLoadedUserId(user.id);
+        setLoadedUserId(userId);
         setIsRequestLoading(false);
       }
     }
-  }, [user]);
+  }, [userId]);
 
   useEffect(() => {
     void refreshProfile();
   }, [refreshProfile]);
 
+  useEffect(() => {
+    if (!userId) {
+      return;
+    }
+
+    const client = getSupabaseClient();
+    const channel = client
+      .channel(`profile:${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          filter: `auth_user_id=eq.${userId}`,
+          schema: "public",
+          table: "profiles",
+        },
+        () => void refreshProfile()
+      )
+      .subscribe();
+
+    return () => {
+      void client.removeChannel(channel);
+    };
+  }, [refreshProfile, userId]);
+
   const value = useMemo(
-    () => ({
-      error,
-      isLoading:
-        Boolean(user) && (isRequestLoading || loadedUserId !== user?.id),
-      profile,
-      refreshProfile,
-    }),
-    [error, isRequestLoading, loadedUserId, profile, refreshProfile, user]
+    () => {
+      const hasLoadedProfileForCurrentUser =
+        Boolean(userId) &&
+        loadedUserId === userId &&
+        profile?.authUserId === userId;
+
+      return {
+        error,
+        isLoading:
+          Boolean(userId) &&
+          !hasLoadedProfileForCurrentUser &&
+          (isRequestLoading || loadedUserId !== userId),
+        profile,
+        refreshProfile,
+      };
+    },
+    [error, isRequestLoading, loadedUserId, profile, refreshProfile, userId]
   );
 
   return (
