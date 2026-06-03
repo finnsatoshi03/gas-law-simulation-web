@@ -20,6 +20,8 @@ import { NavMain } from "./NavMain";
 import { ExitDialog } from "@/components/ExitDialog";
 import { useLogout } from "@/hooks/use-logout";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useAccessControl } from "@/contexts/AccessControlContext";
+import { FEATURE } from "@/lib/features";
 import { canAccess, PERMISSION } from "@/lib/permissions";
 
 const navMain = [
@@ -30,26 +32,32 @@ const navMain = [
     isActive: true,
     items: [
       {
+        featureKey: FEATURE.BOYLES_LAW_SIMULATION,
         title: "Boyle's Law",
         url: "boyles",
       },
       {
+        featureKey: FEATURE.CHARLES_LAW_SIMULATION,
         title: "Charles' Law",
         url: "charles",
       },
       {
+        featureKey: FEATURE.GAY_LUSSACS_LAW_SIMULATION,
         title: "Gay Lussac's Law",
         url: "lussac",
       },
       {
+        featureKey: FEATURE.AVOGADROS_LAW_SIMULATION,
         title: "Avogadro's Law",
         url: "avogadros",
       },
       {
+        featureKey: FEATURE.COMBINED_GAS_LAW_SIMULATION,
         title: "Combined Gas Law",
         url: "combined",
       },
       {
+        featureKey: FEATURE.IDEAL_GAS_LAW_SIMULATION,
         title: "Ideal Gas Law",
         url: "ideal",
       },
@@ -63,10 +71,13 @@ export function AppSidebar() {
   const location = useLocation();
   const { handleLogout, isLoggingOut } = useLogout();
   const { profile } = useProfile();
+  const { canAccessFeature } = useAccessControl();
   const canAccessAdmin = canAccess(
     profile,
     PERMISSION.ACCESS_ADMIN_DASHBOARD
   );
+  const canAccessDocs = canAccessFeature(FEATURE.DOCUMENTATION);
+  const canAccessSettings = canAccessFeature(FEATURE.SIMULATION_SETTINGS);
 
   const handleCloseApp = () => {
     const storedPreference = localStorage.getItem("exitWithoutConfirm");
@@ -110,7 +121,7 @@ export function AppSidebar() {
             <SidebarMenuButton
               size="sm"
               className="settings-nav-item data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-              isActive={location.pathname === "/admin"}
+              isActive={location.pathname.startsWith("/admin")}
             >
               <Link
                 className="flex-1 flex gap-2 items-center text-left text-sm leading-tight"
@@ -121,32 +132,54 @@ export function AppSidebar() {
               </Link>
             </SidebarMenuButton>
           ) : null}
-          <SidebarMenuButton
-            size="sm"
-            className="settings-nav-item data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            isActive={location.pathname === "/docs"}
-          >
-            <Link
-              className="flex-1 flex gap-2 items-center text-left text-sm leading-tight"
-              to="/docs"
+          {canAccessDocs ? (
+            <SidebarMenuButton
+              size="sm"
+              className="settings-nav-item data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              isActive={location.pathname === "/docs"}
+            >
+              <Link
+                className="flex-1 flex gap-2 items-center text-left text-sm leading-tight"
+                to="/docs"
+              >
+                <File className="size-4" />
+                <span className="truncate font-semibold">About the App</span>
+              </Link>
+            </SidebarMenuButton>
+          ) : (
+            <SidebarMenuButton
+              disabled
+              size="sm"
+              className="settings-nav-item"
             >
               <File className="size-4" />
               <span className="truncate font-semibold">About the App</span>
-            </Link>
-          </SidebarMenuButton>
-          <SidebarMenuButton
-            size="sm"
-            className="settings-nav-item data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            isActive={location.pathname === "/settings"}
-          >
-            <Link
-              className="flex-1 flex gap-2 items-center text-left text-sm leading-tight"
-              to="/settings"
+            </SidebarMenuButton>
+          )}
+          {canAccessSettings ? (
+            <SidebarMenuButton
+              size="sm"
+              className="settings-nav-item data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              isActive={location.pathname === "/settings"}
+            >
+              <Link
+                className="flex-1 flex gap-2 items-center text-left text-sm leading-tight"
+                to="/settings"
+              >
+                <Settings className="size-4" />
+                <span className="truncate font-semibold">Settings</span>
+              </Link>
+            </SidebarMenuButton>
+          ) : (
+            <SidebarMenuButton
+              disabled
+              size="sm"
+              className="settings-nav-item"
             >
               <Settings className="size-4" />
               <span className="truncate font-semibold">Settings</span>
-            </Link>
-          </SidebarMenuButton>
+            </SidebarMenuButton>
+          )}
           <SidebarMenuButton
             size="sm"
             className="exit-app-nav-item data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground hidden"

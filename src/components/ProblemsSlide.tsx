@@ -6,6 +6,7 @@ import {
   X,
   Eye,
   EyeOff,
+  Lock,
   Puzzle,
   GripVertical,
   Plus,
@@ -13,7 +14,9 @@ import {
 } from "lucide-react";
 
 import { useWalkthrough } from "@/contexts/WalkthroughProvider";
+import { useAccessControl } from "@/contexts/AccessControlContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { FEATURE } from "@/lib/features";
 import { cn } from "@/lib/utils";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +53,10 @@ export default function ProblemsSlide({
 }: ProblemsSlideProps) {
   const isMobile = useIsMobile();
   const { state, setUiState } = useWalkthrough();
+  const { canAccessFeature, getFeatureLockMessage } = useAccessControl();
+  const canAccessHints = canAccessFeature(FEATURE.HINTS);
+  const canAccessSampleProblems = canAccessFeature(FEATURE.SAMPLE_PROBLEMS);
+  const canAccessSolutions = canAccessFeature(FEATURE.SOLUTION_SHEETS);
 
   const isWalkthroughActive = state.tourActive;
   const isWalkthroughOpen =
@@ -155,18 +162,28 @@ export default function ProblemsSlide({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
+            disabled={!canAccessSampleProblems}
             onClick={() => setIsExpanded(true)}
             className="problems-slide-button text-xs md:text-sm"
           >
-            <Puzzle />
-            Practice {getGasLawTitle(type)}
+            {canAccessSampleProblems ? <Puzzle /> : <Lock />}
+            {canAccessSampleProblems
+              ? `Practice ${getGasLawTitle(type)}`
+              : "Practice Locked"}
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          Click to practice {getGasLawTitle(type)} problems
+          {canAccessSampleProblems
+            ? `Click to practice ${getGasLawTitle(type)} problems`
+            : getFeatureLockMessage(FEATURE.SAMPLE_PROBLEMS) ??
+              "Sample problems are currently locked."}
         </TooltipContent>
       </Tooltip>
     );
+  }
+
+  if (!canAccessSampleProblems) {
+    return null;
   }
 
   return (
@@ -270,17 +287,20 @@ export default function ProblemsSlide({
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowHint(!showHint)}
+                    disabled={!canAccessHints}
                     className="h-6 px-2"
                   >
-                    {showHint ? (
+                    {!canAccessHints ? (
+                      <Lock className="h-4 w-4 mr-1" />
+                    ) : showHint ? (
                       <EyeOff className="h-4 w-4 mr-1" />
                     ) : (
                       <Eye className="h-4 w-4 mr-1" />
                     )}
-                    {showHint ? "Hide" : "Show"}
+                    {!canAccessHints ? "Locked" : showHint ? "Hide" : "Show"}
                   </Button>
                 </div>
-                {showHint && (
+                {showHint && canAccessHints && (
                   <p
                     className="text-gray-600"
                     style={{ fontSize: `${fontSize}px` }}
@@ -303,17 +323,24 @@ export default function ProblemsSlide({
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowAnswer(!showAnswer)}
+                    disabled={!canAccessSolutions}
                     className="h-6 px-2"
                   >
-                    {showAnswer ? (
+                    {!canAccessSolutions ? (
+                      <Lock className="h-4 w-4 mr-1" />
+                    ) : showAnswer ? (
                       <EyeOff className="h-4 w-4 mr-1" />
                     ) : (
                       <Eye className="h-4 w-4 mr-1" />
                     )}
-                    {showAnswer ? "Hide" : "Show"}
+                    {!canAccessSolutions
+                      ? "Locked"
+                      : showAnswer
+                      ? "Hide"
+                      : "Show"}
                   </Button>
                 </div>
-                {showAnswer && (
+                {showAnswer && canAccessSolutions && (
                   <p
                     className="text-gray-600"
                     style={{ fontSize: `${fontSize}px` }}

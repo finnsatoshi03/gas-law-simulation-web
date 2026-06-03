@@ -1,4 +1,4 @@
-import { ChevronRight, Home, type LucideIcon } from "lucide-react";
+import { ChevronRight, Home, Lock, type LucideIcon } from "lucide-react";
 
 import {
   Collapsible,
@@ -16,6 +16,8 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import { Link } from "react-router-dom";
+import { useAccessControl } from "@/contexts/AccessControlContext";
+import { FEATURE, FeatureKey } from "@/lib/features";
 
 export function NavMain({
   items,
@@ -23,25 +25,39 @@ export function NavMain({
   items: {
     title: string;
     url: string;
+    featureKey?: FeatureKey;
     icon?: LucideIcon;
     isActive?: boolean;
     items?: {
+      featureKey?: FeatureKey;
       title: string;
       url: string;
     }[];
   }[];
 }) {
+  const { canAccessFeature, isFeatureLocked } = useAccessControl();
+  const canAccessHome = canAccessFeature(FEATURE.HOME);
+  const isHomeLocked = isFeatureLocked(FEATURE.HOME) && !canAccessHome;
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
       <SidebarMenu>
         <SidebarMenuItem className="home-nav-item">
-          <Link to="/home">
-            <SidebarMenuButton tooltip="Home">
+          {canAccessHome ? (
+            <Link to="/home">
+              <SidebarMenuButton tooltip="Home">
+                <Home />
+                Home
+              </SidebarMenuButton>
+            </Link>
+          ) : (
+            <SidebarMenuButton disabled tooltip="Home is locked">
               <Home />
               Home
+              {isHomeLocked ? <Lock className="ml-auto size-3.5" /> : null}
             </SidebarMenuButton>
-          </Link>
+          )}
         </SidebarMenuItem>
         {items.map((item) => (
           <Collapsible
@@ -60,22 +76,37 @@ export function NavMain({
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <SidebarMenuSub>
-                  {item.items?.map((subItem) => (
-                    <SidebarMenuSubItem key={subItem.title}>
-                      <SidebarMenuSubButton asChild>
-                        <Link
-                          to={subItem.url}
-                          className={
-                            subItem.title === "Boyle's Law"
-                              ? "boyles-law-nav-item"
-                              : ""
-                          }
-                        >
-                          <span>{subItem.title}</span>
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  ))}
+                  {item.items?.map((subItem) => {
+                    const canAccessItem = subItem.featureKey
+                      ? canAccessFeature(subItem.featureKey)
+                      : true;
+                    const isLocked =
+                      Boolean(subItem.featureKey) && !canAccessItem;
+
+                    return (
+                      <SidebarMenuSubItem key={subItem.title}>
+                        {canAccessItem ? (
+                          <SidebarMenuSubButton asChild>
+                            <Link
+                              to={subItem.url}
+                              className={
+                                subItem.title === "Boyle's Law"
+                                  ? "boyles-law-nav-item"
+                                  : ""
+                              }
+                            >
+                              <span>{subItem.title}</span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        ) : (
+                          <SidebarMenuSubButton aria-disabled="true">
+                            <span>{subItem.title}</span>
+                            {isLocked ? <Lock className="size-3.5" /> : null}
+                          </SidebarMenuSubButton>
+                        )}
+                      </SidebarMenuSubItem>
+                    );
+                  })}
                 </SidebarMenuSub>
               </CollapsibleContent>
             </SidebarMenuItem>

@@ -9,6 +9,7 @@ export type AppRole = (typeof APP_ROLE)[keyof typeof APP_ROLE];
 
 export const PERMISSION = {
   ACCESS_ADMIN_DASHBOARD: "access_admin_dashboard",
+  MANAGE_ACCESS_CONTROLS: "manage_access_controls",
   MANAGE_USERS: "manage_users",
 } as const;
 
@@ -22,6 +23,7 @@ interface PermissionProfile {
 const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
   [APP_ROLE.ADMIN]: [
     PERMISSION.ACCESS_ADMIN_DASHBOARD,
+    PERMISSION.MANAGE_ACCESS_CONTROLS,
     PERMISSION.MANAGE_USERS,
   ],
   [APP_ROLE.USER]: [],
@@ -47,4 +49,3 @@ export const canAccess = (
       profile.status === ACCOUNT_STATUS.ACTIVE &&
       ROLE_PERMISSIONS[profile.role].includes(permission)
   );
-

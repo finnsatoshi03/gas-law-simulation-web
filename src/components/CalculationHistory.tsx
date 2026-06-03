@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Clock, Loader } from "lucide-react";
+import { Clock, Loader, Lock } from "lucide-react";
 import { format } from "date-fns";
 
 import { useGasLaw } from "@/contexts/GasLawProvider";
@@ -26,6 +26,8 @@ import {
   formatVariableSymbol,
 } from "./ui/variable-formatter";
 import { useWalkthrough } from "@/contexts/WalkthroughProvider";
+import { useAccessControl } from "@/contexts/AccessControlContext";
+import { FEATURE } from "@/lib/features";
 
 interface CalculationHistoryEntry {
   id: string;
@@ -59,7 +61,10 @@ const CalculationHistoryDrawer: React.FC<CalculationHistoryDrawerProps> = ({
 }) => {
   const { history, clearHistory, isSaving, isLoading } = useGasLaw();
   const { setUiState, state } = useWalkthrough();
+  const { canAccessFeature, getFeatureLockMessage } = useAccessControl();
   const isMobile = useIsMobile();
+  const canAccessHistory = canAccessFeature(FEATURE.CALCULATION_HISTORY);
+  const canClearHistory = canAccessFeature(FEATURE.CLEAR_HISTORY);
 
   const [localOpen, setLocalOpen] = useState(false);
 
@@ -78,6 +83,28 @@ const CalculationHistoryDrawer: React.FC<CalculationHistoryDrawerProps> = ({
   };
 
   const filteredHistory = history.filter((entry) => entry.lawType === lawType);
+
+  if (!canAccessHistory) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            className="history-button p-0 h-fit w-fit hover:bg-none"
+            disabled
+            size="sm"
+            variant="link"
+          >
+            <Lock className="h-4 w-4" />
+            <p>History</p>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          {getFeatureLockMessage(FEATURE.CALCULATION_HISTORY) ??
+            "Calculation history is currently locked."}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
 
   const renderHistoryEntry = (entry: CalculationHistoryEntry) => (
     <div
@@ -183,9 +210,12 @@ const CalculationHistoryDrawer: React.FC<CalculationHistoryDrawerProps> = ({
                   clearHistory();
                 }}
                 className="clear-history-button"
-                disabled={filteredHistory.length === 0 && isWalkthroughActive}
+                disabled={
+                  !canClearHistory ||
+                  (filteredHistory.length === 0 && isWalkthroughActive)
+                }
               >
-                Clear History
+                {canClearHistory ? "Clear History" : "Clear Locked"}
               </Button>
             )}
           </DrawerTitle>

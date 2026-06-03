@@ -11,6 +11,7 @@ import { GasLawProvider } from "./contexts/GasLawProvider";
 import { WallCollisionProvider } from "./contexts/WallCollissionProvider";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProfileProvider } from "./contexts/ProfileContext";
+import { AccessControlProvider } from "./contexts/AccessControlContext";
 import { SimulationSettingsProvider } from "./contexts/SettingsProvider";
 import { AccessibilityProvider } from "./contexts/AccessibilityProvider";
 
@@ -27,6 +28,7 @@ import Ideal from "./pages/Ideal";
 import Settings from "./pages/Settings";
 import AccessDenied from "./pages/AccessDenied";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import FeatureAccessManagement from "./pages/admin/FeatureAccessManagement";
 import Documentation from "./pages/docs/Documentation";
 import Docs_SimulationBasics from "./pages/docs/Docs_SimulationBasics";
 import Docs_ParamsAndUnits from "./pages/docs/Docs_ParamsAndUnits";
@@ -52,7 +54,9 @@ import {
   SuspendedAccountPage,
 } from "./components/account/AccountStatusPages";
 import { ACCOUNT_STATUS } from "./lib/account-status";
+import { FEATURE } from "./lib/features";
 import { AdminRoute } from "./components/admin/AdminRoute";
+import { FeatureRoute } from "./components/access/FeatureRoute";
 import PageTransition from "./components/PageTransition";
 import { WalkthroughProvider } from "./contexts/WalkthroughProvider";
 import WalkthroughWrapper from "./components/WalkthroughWrapper";
@@ -88,11 +92,13 @@ const AnimatedRoutes = () => {
           path="home"
           element={
             <ProtectedRoute>
-              <WalkthroughWrapper>
-                <PageTransition>
-                  <Home />
-                </PageTransition>
-              </WalkthroughWrapper>
+              <FeatureRoute featureKey={FEATURE.HOME}>
+                <WalkthroughWrapper>
+                  <PageTransition>
+                    <Home />
+                  </PageTransition>
+                </WalkthroughWrapper>
+              </FeatureRoute>
             </ProtectedRoute>
           }
         />
@@ -104,26 +110,70 @@ const AnimatedRoutes = () => {
             </ProtectedRoute>
           }
         >
-          <Route path="docs" element={<Documentation />} />
+          <Route
+            path="docs"
+            element={
+              <FeatureRoute featureKey={FEATURE.DOCUMENTATION}>
+                <Documentation />
+              </FeatureRoute>
+            }
+          />
           <Route
             path="docs/simulation-basics"
-            element={<Docs_SimulationBasics />}
+            element={
+              <FeatureRoute featureKey={FEATURE.DOCUMENTATION}>
+                <Docs_SimulationBasics />
+              </FeatureRoute>
+            }
           />
           <Route
             path="docs/parameters-and-units"
-            element={<Docs_ParamsAndUnits />}
+            element={
+              <FeatureRoute featureKey={FEATURE.DOCUMENTATION}>
+                <Docs_ParamsAndUnits />
+              </FeatureRoute>
+            }
           />
           <Route
             path="docs/wall-collision-dynamics"
-            element={<Docs_WallDynamics />}
+            element={
+              <FeatureRoute featureKey={FEATURE.DOCUMENTATION}>
+                <Docs_WallDynamics />
+              </FeatureRoute>
+            }
           />
           <Route
             path="docs/sample-problems"
-            element={<Docs_SampleProblems />}
+            element={
+              <FeatureRoute featureKey={FEATURE.DOCUMENTATION}>
+                <Docs_SampleProblems />
+              </FeatureRoute>
+            }
           />
-          <Route path="docs/solution" element={<Docs_Solution />} />
-          <Route path="docs/settings" element={<Docs_Settings />} />
-          <Route path="docs/accessibility" element={<Docs_Accessibility />} />
+          <Route
+            path="docs/solution"
+            element={
+              <FeatureRoute featureKey={FEATURE.DOCUMENTATION}>
+                <Docs_Solution />
+              </FeatureRoute>
+            }
+          />
+          <Route
+            path="docs/settings"
+            element={
+              <FeatureRoute featureKey={FEATURE.DOCUMENTATION}>
+                <Docs_Settings />
+              </FeatureRoute>
+            }
+          />
+          <Route
+            path="docs/accessibility"
+            element={
+              <FeatureRoute featureKey={FEATURE.DOCUMENTATION}>
+                <Docs_Accessibility />
+              </FeatureRoute>
+            }
+          />
         </Route>
 
         <Route
@@ -133,19 +183,76 @@ const AnimatedRoutes = () => {
             </ProtectedRoute>
           }
         >
-          <Route path="boyles" element={<Boyles />} />
-          <Route path="charles" element={<Charles />} />
-          <Route path="lussac" element={<Lussac />} />
-          <Route path="avogadros" element={<Avogadros />} />
-          <Route path="combined" element={<Combined />} />
-          <Route path="ideal" element={<Ideal />} />
-          <Route path="settings" element={<Settings />} />
+          <Route
+            path="boyles"
+            element={
+              <FeatureRoute featureKey={FEATURE.BOYLES_LAW_SIMULATION}>
+                <Boyles />
+              </FeatureRoute>
+            }
+          />
+          <Route
+            path="charles"
+            element={
+              <FeatureRoute featureKey={FEATURE.CHARLES_LAW_SIMULATION}>
+                <Charles />
+              </FeatureRoute>
+            }
+          />
+          <Route
+            path="lussac"
+            element={
+              <FeatureRoute featureKey={FEATURE.GAY_LUSSACS_LAW_SIMULATION}>
+                <Lussac />
+              </FeatureRoute>
+            }
+          />
+          <Route
+            path="avogadros"
+            element={
+              <FeatureRoute featureKey={FEATURE.AVOGADROS_LAW_SIMULATION}>
+                <Avogadros />
+              </FeatureRoute>
+            }
+          />
+          <Route
+            path="combined"
+            element={
+              <FeatureRoute featureKey={FEATURE.COMBINED_GAS_LAW_SIMULATION}>
+                <Combined />
+              </FeatureRoute>
+            }
+          />
+          <Route
+            path="ideal"
+            element={
+              <FeatureRoute featureKey={FEATURE.IDEAL_GAS_LAW_SIMULATION}>
+                <Ideal />
+              </FeatureRoute>
+            }
+          />
+          <Route
+            path="settings"
+            element={
+              <FeatureRoute featureKey={FEATURE.SIMULATION_SETTINGS}>
+                <Settings />
+              </FeatureRoute>
+            }
+          />
           <Route path="access-denied" element={<AccessDenied />} />
           <Route
             path="admin"
             element={
               <AdminRoute>
                 <AdminDashboard />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="admin/features"
+            element={
+              <AdminRoute>
+                <FeatureAccessManagement />
               </AdminRoute>
             }
           />
@@ -225,19 +332,21 @@ export default function App() {
   return (
     <AuthProvider>
       <ProfileProvider>
-        <AccessibilityProvider>
-          <WalkthroughProvider>
-            <GasLawProvider>
-              <WallCollisionProvider>
-                <SimulationSettingsProvider>
-                  <HashRouter>
-                    <AnimatedRoutes />
-                  </HashRouter>
-                </SimulationSettingsProvider>
-              </WallCollisionProvider>
-            </GasLawProvider>
-          </WalkthroughProvider>
-        </AccessibilityProvider>
+        <AccessControlProvider>
+          <AccessibilityProvider>
+            <WalkthroughProvider>
+              <GasLawProvider>
+                <WallCollisionProvider>
+                  <SimulationSettingsProvider>
+                    <HashRouter>
+                      <AnimatedRoutes />
+                    </HashRouter>
+                  </SimulationSettingsProvider>
+                </WallCollisionProvider>
+              </GasLawProvider>
+            </WalkthroughProvider>
+          </AccessibilityProvider>
+        </AccessControlProvider>
       </ProfileProvider>
     </AuthProvider>
   );

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   ArrowUpDown,
   Ban,
@@ -6,15 +7,19 @@ import {
   ChevronRight,
   CheckCircle2,
   Clock3,
+  ExternalLink,
   Eye,
+  Lock,
   Loader2,
   MoreHorizontal,
   RefreshCw,
   RotateCcw,
+  Save,
   Search,
   ShieldCheck,
   ShieldMinus,
   ShieldPlus,
+  Unlock,
   UserCheck,
   UserRound,
   UserX,
@@ -34,7 +39,14 @@ import {
   updateAdminProfileStatus,
 } from "@/lib/admin-profiles";
 import { ACCOUNT_STATUS, AccountStatus } from "@/lib/account-status";
+import { DEFAULT_FEATURE_LOCK_MESSAGE } from "@/lib/access-control";
+import {
+  FEATURE_REGISTRY,
+  FeatureDefinition,
+  FeatureKey,
+} from "@/lib/features";
 import { APP_ROLE, AppRole } from "@/lib/permissions";
+import { useAccessControl } from "@/contexts/AccessControlContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -71,6 +83,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -86,6 +99,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 
 const PAGE_SIZE = 10;
 
@@ -110,6 +125,20 @@ type PendingAction =
       nextRole: AppRole;
       profile: AdminProfile;
     };
+
+type PendingAccessAction =
+  | {
+      kind: "app";
+    }
+  | {
+      feature: FeatureDefinition;
+      kind: "feature";
+    };
+
+interface FeatureDraft {
+  isLocked: boolean;
+  lockMessage: string;
+}
 
 interface ActionPresentation {
   confirmClassName: string;
@@ -157,7 +186,7 @@ const StatusBadge = ({ status }: { status: AccountStatus }) => (
   <span
     className={cn(
       "inline-flex rounded-full px-2 py-1 text-xs font-semibold capitalize",
-      STATUS_CLASSES[status]
+      STATUS_CLASSES[status],
     )}
   >
     {status}
@@ -170,7 +199,7 @@ const RoleBadge = ({ role }: { role: AppRole }) => (
       "inline-flex rounded-full px-2 py-1 text-xs font-semibold capitalize",
       role === APP_ROLE.ADMIN
         ? "bg-violet-100 text-violet-700"
-        : "bg-sky-100 text-sky-700"
+        : "bg-sky-100 text-sky-700",
     )}
   >
     {role}
@@ -179,7 +208,7 @@ const RoleBadge = ({ role }: { role: AppRole }) => (
 
 const getStatusActionPresentation = (
   currentStatus: AccountStatus,
-  nextStatus: AccountStatus
+  nextStatus: AccountStatus,
 ): ActionPresentation => {
   if (nextStatus === ACCOUNT_STATUS.REJECTED) {
     return { icon: UserX, ...ACTION_PRESENTATION.danger };
@@ -200,9 +229,7 @@ const getStatusActionPresentation = (
   return { icon: Clock3, ...ACTION_PRESENTATION.admin };
 };
 
-const getRoleActionPresentation = (
-  nextRole: AppRole
-): ActionPresentation => {
+const getRoleActionPresentation = (nextRole: AppRole): ActionPresentation => {
   if (nextRole === APP_ROLE.ADMIN) {
     return { icon: ShieldPlus, ...ACTION_PRESENTATION.admin };
   }
@@ -211,7 +238,7 @@ const getRoleActionPresentation = (
 };
 
 const getPendingActionPresentation = (
-  action: PendingAction
+  action: PendingAction,
 ): ActionPresentation =>
   action.kind === "status"
     ? getStatusActionPresentation(action.profile.status, action.nextStatus)
@@ -253,7 +280,7 @@ const SortButton = ({
   <button
     className={cn(
       "inline-flex items-center gap-1 hover:text-zinc-900",
-      activeSort === column && "text-zinc-900"
+      activeSort === column && "text-zinc-900",
     )}
     onClick={() => onSort(column)}
     type="button"
@@ -265,6 +292,13 @@ const SortButton = ({
 
 export default function AdminDashboard() {
   const { profile: currentProfile, refreshProfile } = useProfile();
+  const {
+    appSettings,
+    featureSettings,
+    isLoading: isAccessControlLoading,
+    updateAppAccessSettings,
+    updateFeatureAccessSetting,
+  } = useAccessControl();
   const [profiles, setProfiles] = useState<AdminProfile[]>([]);
   const [counts, setCounts] = useState(EMPTY_COUNTS);
   const [total, setTotal] = useState(0);
@@ -272,7 +306,7 @@ export default function AdminDashboard() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<AppRole | "all">("all");
   const [statusFilter, setStatusFilter] = useState<AccountStatus | "all">(
-    "all"
+    "all",
   );
   const [sortBy, setSortBy] = useState<ProfileSort>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -281,11 +315,46 @@ export default function AdminDashboard() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [selectedProfile, setSelectedProfile] = useState<AdminProfile | null>(
-    null
+    null,
   );
-  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(
+    null,
+  );
+  const [appLockDraft, setAppLockDraft] = useState({
+    appLockMessage: appSettings.appLockMessage,
+    isAppLocked: appSettings.isAppLocked,
+  });
+  const [featureDrafts, setFeatureDrafts] = useState<
+    Partial<Record<FeatureKey, FeatureDraft>>
+  >({});
+  const [isAccessMutating, setIsAccessMutating] = useState(false);
+  const [mutatingFeatureKey, setMutatingFeatureKey] =
+    useState<FeatureKey | null>(null);
+  const [pendingAccessAction, setPendingAccessAction] =
+    useState<PendingAccessAction | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  useEffect(() => {
+    setAppLockDraft({
+      appLockMessage: appSettings.appLockMessage,
+      isAppLocked: appSettings.isAppLocked,
+    });
+  }, [appSettings]);
+
+  useEffect(() => {
+    const nextDrafts: Partial<Record<FeatureKey, FeatureDraft>> = {};
+
+    for (const feature of FEATURE_REGISTRY) {
+      const setting = featureSettings.get(feature.key);
+      nextDrafts[feature.key] = {
+        isLocked: Boolean(setting?.isLocked),
+        lockMessage: setting?.lockMessage ?? DEFAULT_FEATURE_LOCK_MESSAGE,
+      };
+    }
+
+    setFeatureDrafts(nextDrafts);
+  }, [featureSettings]);
 
   const loadDashboard = useCallback(async () => {
     setIsLoading(true);
@@ -312,7 +381,7 @@ export default function AdminDashboard() {
       setError(
         loadError instanceof Error
           ? loadError.message
-          : "Could not load the admin dashboard."
+          : "Could not load the admin dashboard.",
       );
     } finally {
       setIsLoading(false);
@@ -337,7 +406,7 @@ export default function AdminDashboard() {
       { icon: UserX, label: "Suspended", value: counts.suspendedUsers },
       { icon: UserX, label: "Rejected", value: counts.rejectedUsers },
     ],
-    [counts]
+    [counts],
   );
 
   const handleSort = (column: ProfileSort) => {
@@ -366,11 +435,11 @@ export default function AdminDashboard() {
         pendingAction.kind === "status"
           ? await updateAdminProfileStatus(
               pendingAction.profile.id,
-              pendingAction.nextStatus
+              pendingAction.nextStatus,
             )
           : await updateAdminProfileRole(
               pendingAction.profile.id,
-              pendingAction.nextRole
+              pendingAction.nextRole,
             );
 
       if (updatedProfile.id === currentProfile?.id) {
@@ -378,7 +447,7 @@ export default function AdminDashboard() {
       }
 
       setSelectedProfile((profile) =>
-        profile?.id === updatedProfile.id ? updatedProfile : profile
+        profile?.id === updatedProfile.id ? updatedProfile : profile,
       );
       setSuccess(`${pendingAction.label} completed successfully.`);
       setPendingAction(null);
@@ -387,11 +456,105 @@ export default function AdminDashboard() {
       setError(
         mutationError instanceof Error
           ? mutationError.message
-          : "Could not update the selected user."
+          : "Could not update the selected user.",
       );
     } finally {
       setIsMutating(false);
     }
+  };
+
+  const handleSaveAppLock = async (confirmed = false) => {
+    if (isAccessMutating) {
+      return;
+    }
+
+    if (appLockDraft.isAppLocked && !appSettings.isAppLocked && !confirmed) {
+      setPendingAccessAction({ kind: "app" });
+      return;
+    }
+
+    setIsAccessMutating(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      await updateAppAccessSettings(appLockDraft);
+      setSuccess(
+        appLockDraft.isAppLocked
+          ? "The app is now locked for standard users."
+          : "The app is now unlocked.",
+      );
+      setPendingAccessAction(null);
+    } catch (accessError) {
+      setError(
+        accessError instanceof Error
+          ? accessError.message
+          : "Could not update the app lock settings.",
+      );
+    } finally {
+      setIsAccessMutating(false);
+    }
+  };
+
+  const handleSaveFeatureLock = async (
+    feature: FeatureDefinition,
+    confirmed = false,
+  ) => {
+    if (mutatingFeatureKey) {
+      return;
+    }
+
+    const draft = featureDrafts[feature.key];
+
+    if (!draft) {
+      return;
+    }
+
+    const currentSetting = featureSettings.get(feature.key);
+
+    if (draft.isLocked && !currentSetting?.isLocked && !confirmed) {
+      setPendingAccessAction({ feature, kind: "feature" });
+      return;
+    }
+
+    setMutatingFeatureKey(feature.key);
+    setError("");
+    setSuccess("");
+
+    try {
+      await updateFeatureAccessSetting({
+        featureKey: feature.key,
+        isLocked: draft.isLocked,
+        lockMessage: draft.lockMessage,
+      });
+      setSuccess(
+        draft.isLocked
+          ? `${feature.name} is now locked for standard users.`
+          : `${feature.name} is now unlocked.`,
+      );
+      setPendingAccessAction(null);
+    } catch (accessError) {
+      setError(
+        accessError instanceof Error
+          ? accessError.message
+          : "Could not update the feature lock setting.",
+      );
+    } finally {
+      setMutatingFeatureKey(null);
+    }
+  };
+
+  const handleConfirmAccessAction = async () => {
+    if (!pendingAccessAction) {
+      return;
+    }
+
+    if (pendingAccessAction.kind === "app") {
+      await handleSaveAppLock(true);
+      return;
+    }
+
+    await handleSaveFeatureLock(pendingAccessAction.feature, true);
   };
 
   const actionDescription = pendingAction
@@ -409,6 +572,27 @@ export default function AdminDashboard() {
     ? getPendingActionPresentation(pendingAction)
     : null;
   const PendingActionIcon = pendingActionPresentation?.icon;
+  const isAppLockDirty =
+    appLockDraft.isAppLocked !== appSettings.isAppLocked ||
+    appLockDraft.appLockMessage !== appSettings.appLockMessage;
+  const lockedFeatureCount = FEATURE_REGISTRY.reduce((count, feature) => {
+    const draft = featureDrafts[feature.key];
+    const isLocked =
+      draft?.isLocked ?? Boolean(featureSettings.get(feature.key)?.isLocked);
+
+    return isLocked ? count + 1 : count;
+  }, 0);
+  const accessActionDescription = pendingAccessAction
+    ? pendingAccessAction.kind === "app"
+      ? "Lock the entire app for standard users? Admins will keep access and can unlock it from this dashboard."
+      : `Lock ${pendingAccessAction.feature.name} for standard users? Admins will keep access.`
+    : "";
+  const pendingAccessLockMessage = pendingAccessAction
+    ? pendingAccessAction.kind === "app"
+      ? appLockDraft.appLockMessage
+      : (featureDrafts[pendingAccessAction.feature.key]?.lockMessage ??
+        DEFAULT_FEATURE_LOCK_MESSAGE)
+    : "";
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 py-4">
@@ -439,23 +623,12 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {error ? (
-        <Alert variant="destructive">
-          <AlertTitle>Admin action failed</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      ) : null}
-
-      {success ? (
-        <Alert className="border-green-200 bg-green-50 text-green-800">
-          <AlertTitle>Update complete</AlertTitle>
-          <AlertDescription>{success}</AlertDescription>
-        </Alert>
-      ) : null}
-
       <Card>
         <CardHeader>
-          <CardTitle>User management</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <UserRound className="size-5" />
+            User management
+          </CardTitle>
           <CardDescription>
             Search, filter, inspect, and manage application profiles.
           </CardDescription>
@@ -577,7 +750,7 @@ export default function AdminDashboard() {
                     const isCurrentUser = profile.id === currentProfile?.id;
                     const roleAction = ROLE_ACTIONS[profile.role];
                     const rolePresentation = getRoleActionPresentation(
-                      roleAction.nextRole
+                      roleAction.nextRole,
                     );
                     const RoleActionIcon = rolePresentation.icon;
 
@@ -587,12 +760,12 @@ export default function AdminDashboard() {
                           className={cn(
                             isCurrentUser
                               ? "font-bold text-zinc-950"
-                              : "text-zinc-700"
+                              : "text-zinc-700",
                           )}
                         >
                           {isCurrentUser
                             ? "You"
-                            : profile.fullName ?? "Unnamed user"}
+                            : (profile.fullName ?? "Unnamed user")}
                         </TableCell>
                         <TableCell>{profile.email ?? "No email"}</TableCell>
                         <TableCell>
@@ -625,7 +798,7 @@ export default function AdminDashboard() {
                                     const presentation =
                                       getStatusActionPresentation(
                                         profile.status,
-                                        action.nextStatus
+                                        action.nextStatus,
                                       );
                                     const ActionIcon = presentation.icon;
 
@@ -646,7 +819,7 @@ export default function AdminDashboard() {
                                         {action.label}
                                       </DropdownMenuItem>
                                     );
-                                  }
+                                  },
                                 )}
                                 <DropdownMenuItem
                                   className={rolePresentation.itemClassName}
@@ -702,6 +875,207 @@ export default function AdminDashboard() {
               </Button>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {error ? (
+        <Alert variant="destructive">
+          <AlertTitle>Admin action failed</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      {success ? (
+        <Alert className="border-green-200 bg-green-50 text-green-800">
+          <AlertTitle>Update complete</AlertTitle>
+          <AlertDescription>{success}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lock className="size-5" />
+            Access controls
+          </CardTitle>
+          <CardDescription>
+            Lock the full app or individual features for standard users.
+            Administrators always keep access.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <section className="rounded-xl border p-4">
+            <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  {appLockDraft.isAppLocked ? (
+                    <Lock className="size-4 text-amber-700" />
+                  ) : (
+                    <Unlock className="size-4 text-emerald-700" />
+                  )}
+                  <h3 className="font-semibold">Full app lock</h3>
+                  <span
+                    className={cn(
+                      "rounded-full px-2 py-0.5 text-xs font-semibold",
+                      appLockDraft.isAppLocked
+                        ? "bg-amber-100 text-amber-800"
+                        : "bg-emerald-100 text-emerald-800",
+                    )}
+                  >
+                    {appLockDraft.isAppLocked ? "Locked" : "Unlocked"}
+                  </span>
+                </div>
+                <p className="text-sm text-zinc-500">
+                  When locked, standard users see a full-page access message.
+                </p>
+                <p className="text-xs text-zinc-400">
+                  Last updated {formatDate(appSettings.updatedAt)}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Label htmlFor="app-lock-toggle" className="text-sm">
+                  Lock app
+                </Label>
+                <Switch
+                  checked={appLockDraft.isAppLocked}
+                  disabled={isAccessControlLoading || isAccessMutating}
+                  id="app-lock-toggle"
+                  onCheckedChange={(checked) =>
+                    setAppLockDraft((draft) => ({
+                      ...draft,
+                      isAppLocked: checked,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <Label htmlFor="app-lock-message">Lock message</Label>
+              <Textarea
+                id="app-lock-message"
+                onChange={(event) =>
+                  setAppLockDraft((draft) => ({
+                    ...draft,
+                    appLockMessage: event.target.value,
+                  }))
+                }
+                placeholder="Message standard users see while the app is locked"
+                value={appLockDraft.appLockMessage}
+              />
+            </div>
+
+            <div className="mt-4 flex justify-end">
+              <Button
+                disabled={
+                  isAccessControlLoading || isAccessMutating || !isAppLockDirty
+                }
+                onClick={() => void handleSaveAppLock()}
+              >
+                {isAccessMutating ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Save className="size-4" />
+                )}
+                Save app lock
+              </Button>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+              <div>
+                <h3 className="font-semibold">Feature locks</h3>
+                <p className="text-sm text-zinc-500">
+                  {lockedFeatureCount} of {FEATURE_REGISTRY.length} features
+                  locked. Open the full view to edit lock messages.
+                </p>
+              </div>
+              <Button asChild size="sm" variant="outline">
+                <Link to="/admin/features">
+                  <ExternalLink className="size-4" />
+                  Full feature view
+                </Link>
+              </Button>
+            </div>
+
+            <div className="overflow-hidden rounded-xl border">
+              {FEATURE_REGISTRY.map((feature) => {
+                const setting = featureSettings.get(feature.key);
+                const draft = featureDrafts[feature.key] ?? {
+                  isLocked: false,
+                  lockMessage: DEFAULT_FEATURE_LOCK_MESSAGE,
+                };
+                const isDirty = draft.isLocked !== Boolean(setting?.isLocked);
+                const isFeatureMutating = mutatingFeatureKey === feature.key;
+
+                return (
+                  <div
+                    className="flex flex-col gap-3 border-b px-4 py-3 last:border-b-0 sm:flex-row sm:items-center sm:justify-between"
+                    key={feature.key}
+                  >
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {draft.isLocked ? (
+                          <Lock className="size-4 text-amber-700" />
+                        ) : (
+                          <Unlock className="size-4 text-zinc-400" />
+                        )}
+                        <h4 className="font-semibold">{feature.name}</h4>
+                        <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
+                          {feature.category}
+                        </span>
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-xs font-semibold",
+                            draft.isLocked
+                              ? "bg-amber-100 text-amber-800"
+                              : "bg-zinc-100 text-zinc-600",
+                          )}
+                        >
+                          {draft.isLocked ? "Locked" : "Unlocked"}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-zinc-400">
+                        Last updated {formatDate(setting?.updatedAt ?? null)}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-3">
+                      <Switch
+                        aria-label={`Lock ${feature.name}`}
+                        checked={draft.isLocked}
+                        disabled={isFeatureMutating}
+                        onCheckedChange={(checked) =>
+                          setFeatureDrafts((drafts) => ({
+                            ...drafts,
+                            [feature.key]: {
+                              ...draft,
+                              isLocked: checked,
+                            },
+                          }))
+                        }
+                      />
+                      <Button
+                        disabled={!isDirty || Boolean(mutatingFeatureKey)}
+                        onClick={() => void handleSaveFeatureLock(feature)}
+                        size="sm"
+                        variant={draft.isLocked ? "default" : "outline"}
+                      >
+                        {isFeatureMutating ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <Save className="size-4" />
+                        )}
+                        Save
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
         </CardContent>
       </Card>
 
@@ -766,9 +1140,7 @@ export default function AdminDashboard() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm account change</AlertDialogTitle>
-            <AlertDialogDescription>
-              {actionDescription}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{actionDescription}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isMutating}>Cancel</AlertDialogCancel>
@@ -785,7 +1157,55 @@ export default function AdminDashboard() {
               ) : PendingActionIcon ? (
                 <PendingActionIcon className="size-4" />
               ) : null}
-              {isMutating ? "Updating..." : pendingAction?.label ?? "Confirm"}
+              {isMutating ? "Updating..." : (pendingAction?.label ?? "Confirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        onOpenChange={(open) =>
+          !open && !isAccessMutating && !mutatingFeatureKey
+            ? setPendingAccessAction(null)
+            : undefined
+        }
+        open={Boolean(pendingAccessAction)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm access lock</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <span className="block">{accessActionDescription}</span>
+              <span className="block rounded-lg border bg-zinc-50 p-3 text-zinc-700">
+                <span className="block text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                  Lock message users will see
+                </span>
+                <span className="mt-1 block">
+                  {pendingAccessLockMessage || DEFAULT_FEATURE_LOCK_MESSAGE}
+                </span>
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={isAccessMutating || Boolean(mutatingFeatureKey)}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-amber-700 text-white hover:bg-amber-800 focus-visible:ring-amber-700"
+              disabled={isAccessMutating || Boolean(mutatingFeatureKey)}
+              onClick={(event) => {
+                event.preventDefault();
+                void handleConfirmAccessAction();
+              }}
+            >
+              {isAccessMutating || mutatingFeatureKey ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Lock className="size-4" />
+              )}
+              Confirm lock
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

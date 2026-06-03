@@ -1,5 +1,12 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { ChevronDown, ChevronUp, Eye, EyeOff, Lightbulb } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  EyeOff,
+  Lightbulb,
+  Lock,
+} from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,6 +29,8 @@ import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { Input } from "./ui/input";
 import { Checkbox } from "./ui/checkbox";
+import { useAccessControl } from "@/contexts/AccessControlContext";
+import { FEATURE } from "@/lib/features";
 
 // Temperature conversion utilities
 const celsiusToKelvin = (celsius: number): number => celsius + 273.15;
@@ -120,6 +129,8 @@ export const SolutionSheet: React.FC<SolutionSheetProps> = ({
   values,
   units,
 }) => {
+  const { canAccessFeature, getFeatureLockMessage } = useAccessControl();
+  const canAccessSolutions = canAccessFeature(FEATURE.SOLUTION_SHEETS);
   const [showPulsing, setShowPulsing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [solutionAuthenticated, setSolutionAuthenticated] = useState(false);
@@ -259,6 +270,29 @@ export const SolutionSheet: React.FC<SolutionSheetProps> = ({
   };
 
   if (!result) return null;
+
+  if (!canAccessSolutions) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            className={`w-fit ${className}`}
+            disabled
+            variant="secondary"
+          >
+            <Lock className="size-4" />
+            Solution Locked
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>
+            {getFeatureLockMessage(FEATURE.SOLUTION_SHEETS) ??
+              "Solution sheets are currently locked."}
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
 
   return (
     <Dialog

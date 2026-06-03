@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, ShieldCheck } from "lucide-react";
+import { ChevronLeft, ChevronRight, Lock, ShieldCheck } from "lucide-react";
 
 import { GAS_LAWS } from "@/lib/constants";
 
@@ -15,7 +15,9 @@ import { Button } from "@/components/ui/button";
 import { AccessibilityButton } from "@/components/AccessibilityButton";
 import { useWalkthrough } from "@/contexts/WalkthroughProvider";
 import TourResumeDialog from "@/components/TourResumeDialog";
+import { useAccessControl } from "@/contexts/AccessControlContext";
 import { useProfile } from "@/contexts/ProfileContext";
+import { FEATURE, FeatureKey } from "@/lib/features";
 import { canAccess, PERMISSION } from "@/lib/permissions";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 
@@ -87,13 +89,27 @@ const moleculeTypes: MoleculeType[] = [
 const CONTAINER_PADDING = 30;
 const BASE_TEMPERATURE = 293;
 
+const GAS_LAW_FEATURE_BY_LINK: Record<string, FeatureKey> = {
+  "/avogadros": FEATURE.AVOGADROS_LAW_SIMULATION,
+  "/boyles": FEATURE.BOYLES_LAW_SIMULATION,
+  "/charles": FEATURE.CHARLES_LAW_SIMULATION,
+  "/combined": FEATURE.COMBINED_GAS_LAW_SIMULATION,
+  "/ideal": FEATURE.IDEAL_GAS_LAW_SIMULATION,
+  "/lussac": FEATURE.GAY_LUSSACS_LAW_SIMULATION,
+};
+
 export default function Home() {
   const navigate = useNavigate();
   const { profile } = useProfile();
+  const { canAccessFeature } = useAccessControl();
   const canAccessAdmin = canAccess(
     profile,
     PERMISSION.ACCESS_ADMIN_DASHBOARD
   );
+  const canAccessAccessibility = canAccessFeature(FEATURE.ACCESSIBILITY_CONTROLS);
+  const canAccessDocs = canAccessFeature(FEATURE.DOCUMENTATION);
+  const canAccessSettings = canAccessFeature(FEATURE.SIMULATION_SETTINGS);
+  const canAccessWalkthrough = canAccessFeature(FEATURE.GUIDED_WALKTHROUGH);
   const {
     setState,
     getStoredProgress,
@@ -556,6 +572,10 @@ export default function Home() {
               <div className="flex items-center justify-center relative w-full md:w-[70vw]">
                 {GAS_LAWS.map((law, index) => {
                   const isActive = index === activeIndex;
+                  const featureKey = GAS_LAW_FEATURE_BY_LINK[law.link];
+                  const canAccessLaw = featureKey
+                    ? canAccessFeature(featureKey)
+                    : true;
                   // Calculate position based on distance from active index
                   const position = index - activeIndex;
                   const translateX =
@@ -566,7 +586,7 @@ export default function Home() {
                         <TooltipTrigger asChild>
                           <Link
                             key={law.id}
-                            to={isActive ? law.link : ""}
+                            to={isActive && canAccessLaw ? law.link : ""}
                             className={`absolute w-32 h-md:w-56 h-44 h-md:h-72 rounded-xl overflow-hidden shadow-lg transition-all duration-500 ease-out cursor-pointer
                       ${
                         isActive
@@ -602,6 +622,12 @@ export default function Home() {
                                   {law.year}
                                 </p>
                               </div>
+                              {!canAccessLaw ? (
+                                <div className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-center gap-1 bg-black/45 py-2 text-xs font-semibold text-white">
+                                  <Lock className="size-3.5" />
+                                  Locked
+                                </div>
+                              ) : null}
                             </div>
                           </Link>
                         </TooltipTrigger>
@@ -653,15 +679,16 @@ export default function Home() {
           <div className="flex flex-col gap-2">
             <Button
               className="home-tour-start w-32 md:w-56 md:block hidden z-10 bg-green-600 hover:bg-green-500"
+              disabled={!canAccessWalkthrough}
               onClick={handleStartTour}
             >
-              Start Guide
+              {canAccessWalkthrough ? "Start Guide" : "Guide Locked"}
             </Button>
-            <Button className="w-32 md:w-56 z-10">
-              <Link to="/docs">About the App</Link>
+            <Button className="w-32 md:w-56 z-10" disabled={!canAccessDocs}>
+              {canAccessDocs ? <Link to="/docs">About the App</Link> : "About Locked"}
             </Button>
-            <Button className="w-32 md:w-56 z-10">
-              <Link to="/settings">Settings</Link>
+            <Button className="w-32 md:w-56 z-10" disabled={!canAccessSettings}>
+              {canAccessSettings ? <Link to="/settings">Settings</Link> : "Settings Locked"}
             </Button>
             {canAccessAdmin ? (
               <Button asChild className="w-32 md:w-56 z-10" variant="secondary">
@@ -704,7 +731,7 @@ export default function Home() {
         timestamp={storedProgress?.timestamp || Date.now()}
       />
 
-      <AccessibilityButton />
+      {canAccessAccessibility ? <AccessibilityButton /> : null}
     </div>
   );
 }

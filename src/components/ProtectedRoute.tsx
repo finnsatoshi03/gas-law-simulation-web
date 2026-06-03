@@ -2,7 +2,9 @@ import { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useAccessControl } from "@/contexts/AccessControlContext";
 import { ACCOUNT_STATUS, getAccountStatusPath } from "@/lib/account-status";
+import { AppLockedPage } from "@/components/access/LockedAccessPages";
 import { AuthLoading } from "@/components/auth/AuthLoading";
 
 interface ProtectedRouteProps {
@@ -16,6 +18,11 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     isLoading: isProfileLoading,
     profile,
   } = useProfile();
+  const {
+    appSettings,
+    isAppLockedForCurrentUser,
+    isLoading: isAccessLoading,
+  } = useAccessControl();
   const location = useLocation();
 
   if (isLoading) {
@@ -36,6 +43,14 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   if (profile.status !== ACCOUNT_STATUS.ACTIVE) {
     return <Navigate replace to={getAccountStatusPath(profile.status)} />;
+  }
+
+  if (isAccessLoading) {
+    return <AuthLoading message="Checking access..." />;
+  }
+
+  if (isAppLockedForCurrentUser) {
+    return <AppLockedPage message={appSettings.appLockMessage} />;
   }
 
   return <>{children}</>;

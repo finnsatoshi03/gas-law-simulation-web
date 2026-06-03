@@ -35,6 +35,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { FeatureLockedPage } from "@/components/access/LockedAccessPages";
+import { useAccessControl } from "@/contexts/AccessControlContext";
+import { FEATURE } from "@/lib/features";
 
 const STORAGE_KEY = "gas_laws_problems";
 
@@ -48,6 +51,7 @@ const GAS_LAW_NAMES: { [key in Problem["type"]]: string } = {
 };
 
 export default function SampleProblems() {
+  const { canAccessFeature, getFeatureLockMessage } = useAccessControl();
   const [problems, setProblems] = useState<Problem[]>([]);
   const [selectedType, setSelectedType] = useState<string>("boyles");
   const [editingProblem, setEditingProblem] = useState<Problem | null>(null);
@@ -125,6 +129,14 @@ export default function SampleProblems() {
     selectedType === "all"
       ? problems
       : problems.filter((p) => p.type === selectedType);
+
+  if (!canAccessFeature(FEATURE.SAMPLE_PROBLEM_MANAGEMENT)) {
+    return (
+      <FeatureLockedPage
+        message={getFeatureLockMessage(FEATURE.SAMPLE_PROBLEM_MANAGEMENT)}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
