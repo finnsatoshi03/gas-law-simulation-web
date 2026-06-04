@@ -17,8 +17,8 @@ import {
   FeatureKey,
 } from "@/lib/features";
 import { useAccessControl } from "@/contexts/AccessControlContext";
+import { useToast } from "@/contexts/ToastContext";
 import { cn } from "@/lib/utils";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,6 +55,7 @@ const formatDate = (value: string | null) =>
     : "Never";
 
 export default function FeatureAccessManagement() {
+  const { showToast } = useToast();
   const {
     featureSettings,
     isLoading,
@@ -68,8 +69,6 @@ export default function FeatureAccessManagement() {
     useState<FeatureKey | null>(null);
   const [pendingFeature, setPendingFeature] =
     useState<FeatureDefinition | null>(null);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   useEffect(() => {
     const nextDrafts: Partial<Record<FeatureKey, FeatureDraft>> = {};
@@ -107,8 +106,6 @@ export default function FeatureAccessManagement() {
     }
 
     setMutatingFeatureKey(feature.key);
-    setError("");
-    setSuccess("");
 
     try {
       await updateFeatureAccessSetting({
@@ -116,18 +113,23 @@ export default function FeatureAccessManagement() {
         isLocked: draft.isLocked,
         lockMessage: draft.lockMessage,
       });
-      setSuccess(
-        draft.isLocked
+      showToast({
+        description: draft.isLocked
           ? `${feature.name} is now locked for standard users.`
-          : `${feature.name} is now unlocked.`
-      );
+          : `${feature.name} is now unlocked.`,
+        title: "Feature access updated",
+        variant: "success",
+      });
       setPendingFeature(null);
     } catch (accessError) {
-      setError(
-        accessError instanceof Error
-          ? accessError.message
-          : "Could not update the feature lock setting."
-      );
+      showToast({
+        description:
+          accessError instanceof Error
+            ? accessError.message
+            : "Could not update the feature lock setting.",
+        title: "Feature access update failed",
+        variant: "error",
+      });
     } finally {
       setMutatingFeatureKey(null);
     }
@@ -168,20 +170,6 @@ export default function FeatureAccessManagement() {
           Refresh
         </Button>
       </div>
-
-      {error ? (
-        <Alert variant="destructive">
-          <AlertTitle>Access control update failed</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      ) : null}
-
-      {success ? (
-        <Alert className="border-green-200 bg-green-50 text-green-800">
-          <AlertTitle>Update complete</AlertTitle>
-          <AlertDescription>{success}</AlertDescription>
-        </Alert>
-      ) : null}
 
       <Card>
         <CardHeader>

@@ -6,15 +6,18 @@ import { Button } from "@/components/ui/button";
 
 interface LockedAccessPageProps {
   message?: string | null;
+  title?: string;
 }
 
-export const AppLockedPage = ({ message }: LockedAccessPageProps) => (
+export const AppLockedPage = ({ message, title }: LockedAccessPageProps) => (
   <main className="grid min-h-screen place-items-center bg-gradient-to-b from-zinc-950 via-slate-950 to-black px-6 py-10 text-white">
     <section className="w-full max-w-xl rounded-2xl border border-white/10 bg-white/[0.06] p-8 text-center shadow-2xl backdrop-blur">
       <div className="mx-auto grid size-14 place-items-center rounded-full bg-amber-400/15 text-amber-200">
         <Lock className="size-7" />
       </div>
-      <h1 className="mt-6 text-2xl font-bold">App temporarily locked</h1>
+      <h1 className="mt-6 text-2xl font-bold">
+        {title || "App temporarily locked"}
+      </h1>
       <p className="mt-3 text-sm leading-6 text-zinc-300">
         {message ||
           "The Gas Law Simulation app is temporarily unavailable. Please check back later."}
@@ -26,7 +29,7 @@ export const AppLockedPage = ({ message }: LockedAccessPageProps) => (
   </main>
 );
 
-export const FeatureLockedPage = ({ message }: LockedAccessPageProps) => {
+export const FeatureLockedPage = ({ message, title }: LockedAccessPageProps) => {
   const navigate = useNavigate();
 
   return (
@@ -36,7 +39,7 @@ export const FeatureLockedPage = ({ message }: LockedAccessPageProps) => {
           <Lock className="size-6" />
         </div>
         <h1 className="mt-5 text-2xl font-bold text-zinc-950">
-          Feature locked
+          {title || "Feature locked"}
         </h1>
         <p className="mt-3 text-sm leading-6 text-zinc-600">
           {message || "This feature is currently locked by the administrator."}

@@ -10,7 +10,9 @@ import { AnimatePresence } from "framer-motion";
 import { GasLawProvider } from "./contexts/GasLawProvider";
 import { WallCollisionProvider } from "./contexts/WallCollissionProvider";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ToastProvider } from "./contexts/ToastContext";
 import { ProfileProvider } from "./contexts/ProfileContext";
+import { AccessMessagesProvider } from "./contexts/AccessMessagesContext";
 import { AccessControlProvider } from "./contexts/AccessControlContext";
 import { SimulationSettingsProvider } from "./contexts/SettingsProvider";
 import { AccessibilityProvider } from "./contexts/AccessibilityProvider";
@@ -28,6 +30,8 @@ import Ideal from "./pages/Ideal";
 import Settings from "./pages/Settings";
 import AccessDenied from "./pages/AccessDenied";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AccessMessageManagement from "./pages/admin/AccessMessageManagement";
+import ActivityLogs from "./pages/admin/ActivityLogs";
 import FeatureAccessManagement from "./pages/admin/FeatureAccessManagement";
 import Documentation from "./pages/docs/Documentation";
 import Docs_SimulationBasics from "./pages/docs/Docs_SimulationBasics";
@@ -256,6 +260,22 @@ const AnimatedRoutes = () => {
               </AdminRoute>
             }
           />
+          <Route
+            path="admin/messages"
+            element={
+              <AdminRoute>
+                <AccessMessageManagement />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="admin/activity"
+            element={
+              <AdminRoute>
+                <ActivityLogs />
+              </AdminRoute>
+            }
+          />
         </Route>
         <Route
           path="login"
@@ -330,24 +350,28 @@ const AnimatedRoutes = () => {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <ProfileProvider>
-        <AccessControlProvider>
-          <AccessibilityProvider>
-            <WalkthroughProvider>
-              <GasLawProvider>
-                <WallCollisionProvider>
-                  <SimulationSettingsProvider>
-                    <HashRouter>
-                      <AnimatedRoutes />
-                    </HashRouter>
-                  </SimulationSettingsProvider>
-                </WallCollisionProvider>
-              </GasLawProvider>
-            </WalkthroughProvider>
-          </AccessibilityProvider>
-        </AccessControlProvider>
-      </ProfileProvider>
-    </AuthProvider>
+    <ToastProvider>
+      <AuthProvider>
+        <ProfileProvider>
+          <AccessMessagesProvider>
+            <AccessControlProvider>
+              <AccessibilityProvider>
+                <WalkthroughProvider>
+                  <GasLawProvider>
+                    <WallCollisionProvider>
+                      <SimulationSettingsProvider>
+                        <HashRouter>
+                          <AnimatedRoutes />
+                        </HashRouter>
+                      </SimulationSettingsProvider>
+                    </WallCollisionProvider>
+                  </GasLawProvider>
+                </WalkthroughProvider>
+              </AccessibilityProvider>
+            </AccessControlProvider>
+          </AccessMessagesProvider>
+        </ProfileProvider>
+      </AuthProvider>
+    </ToastProvider>
   );
 }

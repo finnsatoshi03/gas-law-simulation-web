@@ -10,19 +10,19 @@ import {
 
 import { AuthPage } from "@/components/auth/AuthPage";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAccessMessages } from "@/contexts/AccessMessagesContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useLogout } from "@/hooks/use-logout";
 import { ACCOUNT_STATUS, AccountStatus } from "@/lib/account-status";
+import { ACCESS_MESSAGE_KEY, AccessMessageKey } from "@/lib/access-messages";
 import {
   authGhostButtonClass,
   authPrimaryButtonClass,
 } from "@/components/auth/auth-styles";
 
 interface AccountStatusCopy {
-  description: string;
-  help: string;
   icon: typeof Clock3;
-  title: string;
+  messageKey: AccessMessageKey;
 }
 
 const ACCOUNT_STATUS_COPY: Record<
@@ -30,23 +30,16 @@ const ACCOUNT_STATUS_COPY: Record<
   AccountStatusCopy
 > = {
   [ACCOUNT_STATUS.PENDING]: {
-    description:
-      "Your account has been created successfully and is currently awaiting administrator approval.",
-    help: "You will gain access to the simulations once your account has been approved.",
     icon: Clock3,
-    title: "Approval pending",
+    messageKey: ACCESS_MESSAGE_KEY.ACCOUNT_PENDING,
   },
   [ACCOUNT_STATUS.SUSPENDED]: {
-    description: "Your account is currently suspended.",
-    help: "Please contact the administrator for assistance.",
     icon: Ban,
-    title: "Account suspended",
+    messageKey: ACCESS_MESSAGE_KEY.ACCOUNT_SUSPENDED,
   },
   [ACCOUNT_STATUS.REJECTED]: {
-    description: "Your account was not approved for access.",
-    help: "Please contact the administrator if you believe this is an error.",
     icon: CircleX,
-    title: "Access request rejected",
+    messageKey: ACCESS_MESSAGE_KEY.ACCOUNT_REJECTED,
   },
 };
 
@@ -62,25 +55,29 @@ const AccountStatusPage = ({
   status: Exclude<AccountStatus, "active">;
 }) => {
   const { user } = useAuth();
+  const { getAccessMessage } = useAccessMessages();
   const { isLoading, refreshProfile } = useProfile();
   const { handleLogout, isLoggingOut } = useLogout();
   const copy = ACCOUNT_STATUS_COPY[status];
+  const message = getAccessMessage(copy.messageKey);
 
   return (
     <AuthPage
       center
-      description={copy.description}
+      description={message.description}
       icon={<StatusIcon icon={copy.icon} />}
-      title={copy.title}
+      title={message.title}
       footer={
         user?.email ? (
           <span className="text-[#6f6a92]">Signed in as {user.email}</span>
         ) : undefined
       }
     >
-      <p className="mb-5 text-center text-[14px] leading-relaxed text-[#c9c5e4]">
-        {copy.help}
-      </p>
+      {message.helpText ? (
+        <p className="mb-5 text-center text-[14px] leading-relaxed text-[#c9c5e4]">
+          {message.helpText}
+        </p>
+      ) : null}
       <div className="flex flex-col gap-3">
         <button
           aria-busy={isLoading}
@@ -129,18 +126,17 @@ export const RejectedAccountPage = () => (
 
 export const ProfileErrorPage = () => {
   const { user } = useAuth();
+  const { getAccessMessage } = useAccessMessages();
   const { error, isLoading, refreshProfile } = useProfile();
   const { handleLogout, isLoggingOut } = useLogout();
+  const message = getAccessMessage(ACCESS_MESSAGE_KEY.PROFILE_ERROR);
 
   return (
     <AuthPage
       center
-      description={
-        error ??
-        "Your account profile could not be loaded. Try again or contact the administrator."
-      }
+      description={error ?? message.description}
       icon={<StatusIcon icon={TriangleAlert} />}
-      title="Account profile unavailable"
+      title={message.title}
       footer={
         user?.email ? (
           <span className="text-[#6f6a92]">Signed in as {user.email}</span>

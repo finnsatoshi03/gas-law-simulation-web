@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  Activity,
   ArrowUpDown,
   Ban,
   ChevronLeft,
@@ -11,6 +12,7 @@ import {
   Eye,
   Lock,
   Loader2,
+  MessageSquareText,
   MoreHorizontal,
   RefreshCw,
   RotateCcw,
@@ -48,6 +50,7 @@ import {
 import { APP_ROLE, AppRole } from "@/lib/permissions";
 import { useAccessControl } from "@/contexts/AccessControlContext";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useToast } from "@/contexts/ToastContext";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -292,6 +295,7 @@ const SortButton = ({
 
 export default function AdminDashboard() {
   const { profile: currentProfile, refreshProfile } = useProfile();
+  const { showToast } = useToast();
   const {
     appSettings,
     featureSettings,
@@ -313,7 +317,6 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [isMutating, setIsMutating] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [selectedProfile, setSelectedProfile] = useState<AdminProfile | null>(
     null,
   );
@@ -428,7 +431,6 @@ export default function AdminDashboard() {
 
     setIsMutating(true);
     setError("");
-    setSuccess("");
 
     try {
       const updatedProfile =
@@ -449,15 +451,22 @@ export default function AdminDashboard() {
       setSelectedProfile((profile) =>
         profile?.id === updatedProfile.id ? updatedProfile : profile,
       );
-      setSuccess(`${pendingAction.label} completed successfully.`);
+      showToast({
+        description: `${pendingAction.label} completed successfully.`,
+        title: "Update complete",
+        variant: "success",
+      });
       setPendingAction(null);
       await loadDashboard();
     } catch (mutationError) {
-      setError(
-        mutationError instanceof Error
-          ? mutationError.message
-          : "Could not update the selected user.",
-      );
+      showToast({
+        description:
+          mutationError instanceof Error
+            ? mutationError.message
+            : "Could not update the selected user.",
+        title: "Admin action failed",
+        variant: "error",
+      });
     } finally {
       setIsMutating(false);
     }
@@ -475,22 +484,26 @@ export default function AdminDashboard() {
 
     setIsAccessMutating(true);
     setError("");
-    setSuccess("");
 
     try {
       await updateAppAccessSettings(appLockDraft);
-      setSuccess(
-        appLockDraft.isAppLocked
+      showToast({
+        description: appLockDraft.isAppLocked
           ? "The app is now locked for standard users."
           : "The app is now unlocked.",
-      );
+        title: "Access control updated",
+        variant: "success",
+      });
       setPendingAccessAction(null);
     } catch (accessError) {
-      setError(
-        accessError instanceof Error
-          ? accessError.message
-          : "Could not update the app lock settings.",
-      );
+      showToast({
+        description:
+          accessError instanceof Error
+            ? accessError.message
+            : "Could not update the app lock settings.",
+        title: "Access control update failed",
+        variant: "error",
+      });
     } finally {
       setIsAccessMutating(false);
     }
@@ -519,7 +532,6 @@ export default function AdminDashboard() {
 
     setMutatingFeatureKey(feature.key);
     setError("");
-    setSuccess("");
 
     try {
       await updateFeatureAccessSetting({
@@ -527,18 +539,23 @@ export default function AdminDashboard() {
         isLocked: draft.isLocked,
         lockMessage: draft.lockMessage,
       });
-      setSuccess(
-        draft.isLocked
+      showToast({
+        description: draft.isLocked
           ? `${feature.name} is now locked for standard users.`
           : `${feature.name} is now unlocked.`,
-      );
+        title: "Feature access updated",
+        variant: "success",
+      });
       setPendingAccessAction(null);
     } catch (accessError) {
-      setError(
-        accessError instanceof Error
-          ? accessError.message
-          : "Could not update the feature lock setting.",
-      );
+      showToast({
+        description:
+          accessError instanceof Error
+            ? accessError.message
+            : "Could not update the feature lock setting.",
+        title: "Feature access update failed",
+        variant: "error",
+      });
     } finally {
       setMutatingFeatureKey(null);
     }
@@ -885,12 +902,49 @@ export default function AdminDashboard() {
         </Alert>
       ) : null}
 
-      {success ? (
-        <Alert className="border-green-200 bg-green-50 text-green-800">
-          <AlertTitle>Update complete</AlertTitle>
-          <AlertDescription>{success}</AlertDescription>
-        </Alert>
-      ) : null}
+      <section className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquareText className="size-5" />
+              Access messages
+            </CardTitle>
+            <CardDescription>
+              Edit the copy shown on pending, suspended, rejected, locked, and
+              denied access screens.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="outline">
+              <Link to="/admin/messages">
+                <ExternalLink className="size-4" />
+                Manage messages
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="size-5" />
+              Activity logs
+            </CardTitle>
+            <CardDescription>
+              Review administrator changes to users, roles, statuses, and
+              access controls.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="outline">
+              <Link to="/admin/activity">
+                <ExternalLink className="size-4" />
+                View logs
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </section>
 
       <Card>
         <CardHeader>

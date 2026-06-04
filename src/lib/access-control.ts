@@ -3,13 +3,17 @@ import {
   FeatureKey,
   isFeatureKey,
 } from "@/lib/features";
+import {
+  ACCESS_MESSAGE_KEY,
+  FALLBACK_ACCESS_MESSAGES,
+} from "@/lib/access-messages";
 import { getSupabaseClient } from "@/lib/supabase";
 
 export const DEFAULT_APP_LOCK_MESSAGE =
-  "The Gas Law Simulation app is temporarily unavailable. Please check back later.";
+  FALLBACK_ACCESS_MESSAGES[ACCESS_MESSAGE_KEY.APP_LOCKED].description;
 
 export const DEFAULT_FEATURE_LOCK_MESSAGE =
-  "This feature is currently locked by the administrator.";
+  FALLBACK_ACCESS_MESSAGES[ACCESS_MESSAGE_KEY.FEATURE_LOCKED].description;
 
 export interface AppAccessSettings {
   appLockMessage: string;
