@@ -1,15 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
-import {
-  ChevronDown,
-  ChevronUp,
-  Eye,
-  EyeOff,
-  Lightbulb,
-  Lock,
-} from "lucide-react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Lightbulb, Lock } from "lucide-react";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 
@@ -17,18 +7,7 @@ import { GAS_CONSTANTS } from "@/lib/constants";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "./ui/form";
-import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { Input } from "./ui/input";
-import { Checkbox } from "./ui/checkbox";
 import { useAccessControl } from "@/contexts/AccessControlContext";
 import { FEATURE } from "@/lib/features";
 
@@ -132,47 +111,6 @@ export const SolutionSheet: React.FC<SolutionSheetProps> = ({
   const { canAccessFeature, getFeatureLockMessage } = useAccessControl();
   const canAccessSolutions = canAccessFeature(FEATURE.SOLUTION_SHEETS);
   const [showPulsing, setShowPulsing] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [solutionAuthenticated, setSolutionAuthenticated] = useState(false);
-  const [rememberSolution, setRememberSolution] = useState(false);
-  const [showSolutionContent, setShowSolutionContent] = useState(false);
-
-  const authSchema = z.object({
-    password: z.string(),
-  });
-
-  useEffect(() => {
-    const savedSolutionAuth = localStorage.getItem("solutionSheetAuth");
-    if (savedSolutionAuth) {
-      setSolutionAuthenticated(true);
-      setShowSolutionContent(true);
-    }
-  }, []);
-
-  // Form setup
-  const form = useForm<z.infer<typeof authSchema>>({
-    resolver: zodResolver(authSchema),
-    defaultValues: {
-      password: "",
-    },
-  });
-
-  const onSubmit = (data: z.infer<typeof authSchema>) => {
-    const SOLUTION_PASSWORD = import.meta.env.VITE_APP_PASSWORD;
-
-    if (data.password === SOLUTION_PASSWORD) {
-      setSolutionAuthenticated(true);
-
-      if (rememberSolution) {
-        localStorage.setItem("solutionSheetAuth", "true");
-      }
-    } else {
-      form.setError("password", {
-        type: "manual",
-        message: "Invalid solution password",
-      });
-    }
-  };
 
   const calculatedVariable = useMemo(() => {
     if (!result) return null;
@@ -295,11 +233,7 @@ export const SolutionSheet: React.FC<SolutionSheetProps> = ({
   }
 
   return (
-    <Dialog
-      onOpenChange={(open) => {
-        if (!open) setShowSolutionContent(false);
-      }}
-    >
+    <Dialog>
       <Tooltip>
         <TooltipTrigger asChild>
           <DialogTrigger asChild>
@@ -319,144 +253,52 @@ export const SolutionSheet: React.FC<SolutionSheetProps> = ({
         </TooltipContent>
       </Tooltip>
       <DialogContent className="max-w-[800px] max-h-[90vh] overflow-y-auto p-6">
-        {!solutionAuthenticated ? (
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold mb-4">Solution Authentication</h2>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-4"
-              >
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Solution Password</FormLabel>
-                      <div className="relative">
-                        <FormControl>
-                          <Input
-                            type={showPassword ? "text" : "password"}
-                            placeholder="Enter solution-specific password"
-                            {...field}
-                            className="pr-10"
-                          />
-                        </FormControl>
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
-                        >
-                          {showPassword ? (
-                            <EyeOff size={20} />
-                          ) : (
-                            <Eye size={20} />
-                          )}
-                        </button>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="remember-solution"
-                    checked={rememberSolution}
-                    onCheckedChange={() =>
-                      setRememberSolution(!rememberSolution)
-                    }
-                  />
-                  <label
-                    htmlFor="remember-solution"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    Remember Solution Access
-                  </label>
-                </div>
-                {form.formState.errors.password && (
-                  <Alert variant="destructive">
-                    <AlertTitle>Authentication Error</AlertTitle>
-                    <AlertDescription>
-                      {form.formState.errors.password.message}
-                    </AlertDescription>
-                  </Alert>
-                )}
-                <Button type="submit" className="w-full">
-                  Unlock Solution
-                </Button>
-              </form>
-            </Form>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold">
-                {lawType} Calculation Solution
-              </h2>
-              <div className="flex gap-2">
-                {result && solutionSteps && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowSolutionContent(!showSolutionContent)}
-                    className="flex items-center gap-2"
-                  >
-                    {showSolutionContent ? (
-                      <>
-                        <ChevronUp size={16} /> Hide Solution
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown size={16} /> Show Solution
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
-            </div>
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold">
+            {lawType} Calculation Solution
+          </h2>
 
-            {result && solutionSteps && showSolutionContent && (
-              <div className="bg-gray-50 p-4 rounded-lg space-y-4">
-                {Object.entries(solutionSteps).map(([key, step]) => (
-                  <div key={key}>
-                    <h3 className="font-semibold mb-2 capitalize">
-                      {key.replace(/_/g, " ")}
-                    </h3>
-                    <div
-                      dangerouslySetInnerHTML={{
-                        __html: renderEquation(step),
-                      }}
-                    />
-                  </div>
-                ))}
-
-                <div className="mt-4 p-3 bg-green-100 rounded">
-                  <h4 className="font-medium">Calculated Value</h4>
-                  <p
+          {solutionSteps && (
+            <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+              {Object.entries(solutionSteps).map(([key, step]) => (
+                <div key={key}>
+                  <h3 className="font-semibold mb-2 capitalize">
+                    {key.replace(/_/g, " ")}
+                  </h3>
+                  <div
                     dangerouslySetInnerHTML={{
-                      __html: renderEquation(
-                        `${
-                          calculatedVariable?.includes("1")
-                            ? calculatedVariable[0].toUpperCase() +
-                              calculatedVariable.substring(1).replace("1", "_1")
-                            : calculatedVariable?.includes("2")
-                            ? calculatedVariable[0].toUpperCase() +
-                              calculatedVariable.substring(1).replace("2", "_2")
-                            : calculatedVariable
-                            ? calculatedVariable[0].toUpperCase() +
-                              calculatedVariable.substring(1)
-                            : ""
-                        } = ${result.value}\\text{ ${
-                          units[calculatedVariable!]
-                        }}`
-                      ),
+                      __html: renderEquation(step),
                     }}
                   />
                 </div>
+              ))}
+
+              <div className="mt-4 p-3 bg-green-100 rounded">
+                <h4 className="font-medium">Calculated Value</h4>
+                <p
+                  dangerouslySetInnerHTML={{
+                    __html: renderEquation(
+                      `${
+                        calculatedVariable?.includes("1")
+                          ? calculatedVariable[0].toUpperCase() +
+                            calculatedVariable.substring(1).replace("1", "_1")
+                          : calculatedVariable?.includes("2")
+                          ? calculatedVariable[0].toUpperCase() +
+                            calculatedVariable.substring(1).replace("2", "_2")
+                          : calculatedVariable
+                          ? calculatedVariable[0].toUpperCase() +
+                            calculatedVariable.substring(1)
+                          : ""
+                      } = ${result.value}\\text{ ${
+                        units[calculatedVariable!]
+                      }}`
+                    ),
+                  }}
+                />
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -237,7 +237,9 @@ export const STATUS_ACTIONS: Record<
   [ACCOUNT_STATUS.SUSPENDED]: [
     { label: "Reactivate user", nextStatus: ACCOUNT_STATUS.ACTIVE },
   ],
-  [ACCOUNT_STATUS.REJECTED]: [],
+  [ACCOUNT_STATUS.REJECTED]: [
+    { label: "Re-approve user", nextStatus: ACCOUNT_STATUS.ACTIVE },
+  ],
 };
 
 export const ROLE_ACTIONS: Record<

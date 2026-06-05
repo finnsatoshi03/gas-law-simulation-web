@@ -164,16 +164,16 @@ const data = {
           url: "/docs/solution#solution-sheet-trigger",
         },
         {
-          title: "Solution Access Authentication",
-          url: "/docs/solution#solution-authentication",
+          title: "Solution Access Control",
+          url: "/docs/solution#solution-access-control",
         },
         {
-          title: "Solution Content Interactions",
+          title: "Solution Content Display",
           url: "/docs/solution#solution-content-interactions",
         },
         {
           title: "Advanced Solution Sheet Features",
-          url: "/docs/solution#solution-sheet-feature",
+          url: "/docs/solution#solution-sheet-features",
         },
       ],
     },

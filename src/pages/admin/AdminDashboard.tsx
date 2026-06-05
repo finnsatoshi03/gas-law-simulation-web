@@ -1145,44 +1145,81 @@ export default function AdminDashboard() {
             </DialogDescription>
           </DialogHeader>
           {selectedProfile ? (
-            <dl className="grid gap-4 text-sm sm:grid-cols-2">
-              <div>
-                <dt className="text-zinc-500">Name</dt>
-                <dd className="font-medium">
-                  {selectedProfile.fullName ?? "Unnamed user"}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-zinc-500">Email</dt>
-                <dd className="font-medium">
-                  {selectedProfile.email ?? "No email"}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-zinc-500">Role</dt>
-                <dd className="mt-1">
-                  <RoleBadge role={selectedProfile.role} />
-                </dd>
-              </div>
-              <div>
-                <dt className="text-zinc-500">Status</dt>
-                <dd className="mt-1">
-                  <StatusBadge status={selectedProfile.status} />
-                </dd>
-              </div>
-              <div>
-                <dt className="text-zinc-500">Created</dt>
-                <dd className="font-medium">
-                  {formatDate(selectedProfile.createdAt)}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-zinc-500">Last login</dt>
-                <dd className="font-medium">
-                  {formatDate(selectedProfile.lastLoginAt)}
-                </dd>
-              </div>
-            </dl>
+            <div className="space-y-5">
+              <dl className="grid gap-4 text-sm sm:grid-cols-2">
+                <div>
+                  <dt className="text-zinc-500">Name</dt>
+                  <dd className="font-medium">
+                    {selectedProfile.fullName ?? "Unnamed user"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-zinc-500">Email</dt>
+                  <dd className="font-medium">
+                    {selectedProfile.email ?? "No email"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-zinc-500">Role</dt>
+                  <dd className="mt-1">
+                    <RoleBadge role={selectedProfile.role} />
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-zinc-500">Status</dt>
+                  <dd className="mt-1">
+                    <StatusBadge status={selectedProfile.status} />
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-zinc-500">Created</dt>
+                  <dd className="font-medium">
+                    {formatDate(selectedProfile.createdAt)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-zinc-500">Last login</dt>
+                  <dd className="font-medium">
+                    {formatDate(selectedProfile.lastLoginAt)}
+                  </dd>
+                </div>
+              </dl>
+
+              {selectedProfile.id !== currentProfile?.id ? (
+                <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
+                  {STATUS_ACTIONS[selectedProfile.status].map((action) => {
+                    const presentation = getStatusActionPresentation(
+                      selectedProfile.status,
+                      action.nextStatus,
+                    );
+                    const ActionIcon = presentation.icon;
+                    const isDestructive =
+                      action.nextStatus === ACCOUNT_STATUS.REJECTED ||
+                      action.nextStatus === ACCOUNT_STATUS.SUSPENDED;
+
+                    return (
+                      <Button
+                        disabled={isMutating}
+                        key={action.nextStatus}
+                        onClick={() =>
+                          setPendingAction({
+                            kind: "status",
+                            label: action.label,
+                            nextStatus: action.nextStatus,
+                            profile: selectedProfile,
+                          })
+                        }
+                        size="sm"
+                        variant={isDestructive ? "destructive" : "outline"}
+                      >
+                        <ActionIcon className="size-4" />
+                        {action.label}
+                      </Button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
           ) : null}
         </DialogContent>
       </Dialog>

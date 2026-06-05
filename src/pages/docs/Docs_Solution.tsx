@@ -3,14 +3,7 @@ import { Separator } from "@/components/ui/separator";
 import { NavigationFooter } from "@/components/docs/NavFooter";
 import { QuickShortcutCards } from "@/components/docs/QuickShortcutCards";
 import { Link } from "react-router-dom";
-import {
-  Lightbulb,
-  Lock,
-  EyeOff,
-  Eye,
-  ChevronUp,
-  ArrowUpRight,
-} from "lucide-react";
+import { ArrowUpRight, Lightbulb, ShieldCheck } from "lucide-react";
 import { OnThisPage } from "@/components/docs/OnThisPage";
 
 export default function Docs_Solution() {
@@ -18,10 +11,10 @@ export default function Docs_Solution() {
     { id: "solution-sheet-overview", title: "Solution Sheet" },
     { id: "solution-sheet-introduction", title: "What is the Solution Sheet?" },
     { id: "solution-sheet-trigger", title: "Solution Button Activation" },
-    { id: "solution-authentication", title: "Solution Access Authentication" },
+    { id: "solution-access-control", title: "Solution Access Control" },
     {
       id: "solution-content-interactions",
-      title: "Solution Content Interactions",
+      title: "Solution Content Display",
     },
     {
       id: "solution-sheet-features",
@@ -106,30 +99,35 @@ export default function Docs_Solution() {
         <Separator />
 
         <DocumentationSection
-          id="solution-authentication"
-          title="Solution Access Authentication"
+          id="solution-access-control"
+          title="Solution Access Control"
         >
           <div className="space-y-4 text-sm md:text-base">
             <div className="flex items-center gap-2 mb-4">
-              <Lock className="size-6 text-red-600" />
-              <h3 className="text-lg font-semibold">Security Mechanism</h3>
+              <ShieldCheck className="size-6 text-emerald-700" />
+              <h3 className="text-lg font-semibold">Account-Based Access</h3>
             </div>
 
             <p>
-              The Solution Sheet implements a secure authentication layer to
-              protect detailed solution steps.
+              Solution access uses the same account and feature-access rules as
+              the rest of the application.
             </p>
 
             <ul className="list-disc pl-6 space-y-2">
-              <li>Requires a specific password to access solutions</li>
-              <li>Option to remember authentication for future sessions</li>
-              <li>Uses localStorage for persistent authentication</li>
+              <li>
+                Active users can access solutions when the feature is enabled
+              </li>
+              <li>
+                Feature locks can restrict solution sheets for standard users
+              </li>
+              <li>Administrators retain access through existing admin rules</li>
             </ul>
 
             <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4">
               <p className="text-sm text-yellow-700">
-                <strong>Authentication Purpose:</strong> Encourage independent
-                problem-solving while providing guided learning resources.
+                <strong>Feature Locking:</strong> When solution sheets are
+                locked, the application displays the configured locked-feature
+                message instead of solution content.
               </p>
             </div>
           </div>
@@ -139,31 +137,18 @@ export default function Docs_Solution() {
 
         <DocumentationSection
           id="solution-content-interactions"
-          title="Solution Content Interactions"
+          title="Solution Content Display"
         >
           <div className="space-y-4 text-sm md:text-base">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <ChevronUp className="size-5" /> Expandable Solution
-            </h3>
+            <h3 className="text-lg font-semibold">Direct Solution Display</h3>
             <ul className="list-disc pl-6 space-y-2">
-              <li>Toggle between showing and hiding solution steps</li>
-              <li>Independent control for solution visibility</li>
-              <li>Supports progressive learning approach</li>
+              <li>Open the Solution button after completing a calculation</li>
+              <li>Solution steps display immediately when access is allowed</li>
+              <li>
+                No additional solution password or visibility toggle is
+                required
+              </li>
             </ul>
-
-            <h3 className="text-lg font-semibold flex items-center gap-2 pt-4">
-              Visibility Controls
-            </h3>
-            <div className="flex items-center gap-4 mb-2">
-              <div className="flex items-center gap-2">
-                <Eye className="size-5 text-blue-600" />
-                <span>Show Solution</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <EyeOff className="size-5 text-gray-600" />
-                <span>Hide Solution</span>
-              </div>
-            </div>
           </div>
         </DocumentationSection>
 
