@@ -12,6 +12,8 @@ export interface AdminProfile {
   createdAt: string;
   updatedAt: string;
   lastLoginAt: string | null;
+  deletedAt: string | null;
+  deletedBy: string | null;
 }
 
 interface ProfileRow {
@@ -24,6 +26,8 @@ interface ProfileRow {
   created_at: string;
   updated_at: string;
   last_login_at: string | null;
+  deleted_at: string | null;
+  deleted_by: string | null;
 }
 
 export interface ProfileCounts {
@@ -36,8 +40,10 @@ export interface ProfileCounts {
 
 export type ProfileSort = "created_at" | "email" | "full_name" | "last_login_at";
 export type SortDirection = "asc" | "desc";
+export type ProfileDeletionFilter = "current" | "deleted" | "all";
 
 interface ListAdminProfilesOptions {
+  deletion: ProfileDeletionFilter;
   page: number;
   pageSize: number;
   role: AppRole | "all";
@@ -53,7 +59,7 @@ export interface ListAdminProfilesResult {
 }
 
 const PROFILE_SELECT =
-  "id, auth_user_id, email, full_name, role, status, created_at, updated_at, last_login_at";
+  "id, auth_user_id, email, full_name, role, status, created_at, updated_at, last_login_at, deleted_at, deleted_by";
 
 const mapProfile = (row: ProfileRow): AdminProfile => {
   if (!isAppRole(row.role) || !isAccountStatus(row.status)) {
@@ -70,6 +76,8 @@ const mapProfile = (row: ProfileRow): AdminProfile => {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     lastLoginAt: row.last_login_at,
+    deletedAt: row.deleted_at,
+    deletedBy: row.deleted_by,
   };
 };
 
@@ -102,6 +110,18 @@ const getSafeAdminError = (error: unknown, fallback: string) => {
     return "The selected user profile no longer exists.";
   }
 
+  if (message.includes("administrators cannot delete their own account")) {
+    return "You cannot delete your own administrator account.";
+  }
+
+  if (message.includes("profile is already deleted")) {
+    return "The selected user is already deleted.";
+  }
+
+  if (message.includes("deleted profiles cannot be changed")) {
+    return "Deleted users cannot be changed.";
+  }
+
   if (
     message.includes("permission denied") ||
     message.includes("row-level security")
@@ -116,6 +136,7 @@ const sanitizeSearch = (value: string) =>
   value.trim().replace(/[,%()]/g, " ").replace(/\s+/g, " ");
 
 export const listAdminProfiles = async ({
+  deletion,
   page,
   pageSize,
   role,
@@ -143,6 +164,12 @@ export const listAdminProfiles = async ({
 
   if (status !== "all") {
     query = query.eq("status", status);
+  }
+
+  if (deletion === "current") {
+    query = query.is("deleted_at", null);
+  } else if (deletion === "deleted") {
+    query = query.not("deleted_at", "is", null);
   }
 
   const { count, data, error } = await query
@@ -218,6 +245,21 @@ export const updateAdminProfileRole = async (
 
   if (error) {
     throw new Error(getSafeAdminError(error, "Could not update the user role."));
+  }
+
+  return mapRpcProfile(data);
+};
+
+export const deleteAdminProfile = async (profileId: string) => {
+  const { data, error } = await getSupabaseClient().rpc(
+    "admin_soft_delete_profile",
+    {
+      target_profile_id: profileId,
+    }
+  );
+
+  if (error) {
+    throw new Error(getSafeAdminError(error, "Could not delete the user."));
   }
 
   return mapRpcProfile(data);

@@ -24,6 +24,8 @@ interface ProfileRow {
   created_at: string;
   updated_at: string;
   last_login_at: string | null;
+  deleted_at: string | null;
+  deleted_by: string | null;
 }
 
 export interface UserProfile {
@@ -36,6 +38,8 @@ export interface UserProfile {
   createdAt: string;
   updatedAt: string;
   lastLoginAt: string | null;
+  deletedAt: string | null;
+  deletedBy: string | null;
 }
 
 interface ProfileContextType {
@@ -46,7 +50,7 @@ interface ProfileContextType {
 }
 
 const PROFILE_SELECT =
-  "id, auth_user_id, email, full_name, role, status, created_at, updated_at, last_login_at";
+  "id, auth_user_id, email, full_name, role, status, created_at, updated_at, last_login_at, deleted_at, deleted_by";
 
 const ProfileContext = createContext<ProfileContextType | null>(null);
 
@@ -65,6 +69,8 @@ const mapProfile = (row: ProfileRow): UserProfile | null => {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     lastLoginAt: row.last_login_at,
+    deletedAt: row.deleted_at,
+    deletedBy: row.deleted_by,
   };
 };
 

@@ -12,12 +12,14 @@ import {
 
 interface AccountStatusRouteProps {
   children: ReactNode;
+  deleted?: boolean;
   expectedStatus?: AccountStatus;
   profileIssue?: boolean;
 }
 
 export const AccountStatusRoute = ({
   children,
+  deleted = false,
   expectedStatus,
   profileIssue = false,
 }: AccountStatusRouteProps) => {
@@ -50,7 +52,28 @@ export const AccountStatusRoute = ({
   }
 
   if (profileIssue) {
-    return <Navigate replace to={getAccountStatusPath(profile.status)} />;
+    return (
+      <Navigate
+        replace
+        to={
+          profile.deletedAt
+            ? "/account/deleted"
+            : getAccountStatusPath(profile.status)
+        }
+      />
+    );
+  }
+
+  if (deleted) {
+    return profile.deletedAt ? (
+      <>{children}</>
+    ) : (
+      <Navigate replace to={getAccountStatusPath(profile.status)} />
+    );
+  }
+
+  if (profile.deletedAt) {
+    return <Navigate replace to="/account/deleted" />;
   }
 
   if (profile.status === ACCOUNT_STATUS.ACTIVE) {

@@ -21,6 +21,7 @@ import {
   ShieldCheck,
   ShieldMinus,
   ShieldPlus,
+  Trash2,
   Unlock,
   UserCheck,
   UserRound,
@@ -30,9 +31,11 @@ import {
 
 import {
   AdminProfile,
+  deleteAdminProfile,
   getAdminProfileCounts,
   listAdminProfiles,
   ProfileCounts,
+  ProfileDeletionFilter,
   ProfileSort,
   ROLE_ACTIONS,
   STATUS_ACTIONS,
@@ -126,6 +129,11 @@ type PendingAction =
       kind: "role";
       label: string;
       nextRole: AppRole;
+      profile: AdminProfile;
+    }
+  | {
+      kind: "delete";
+      label: string;
       profile: AdminProfile;
     };
 
@@ -242,10 +250,15 @@ const getRoleActionPresentation = (nextRole: AppRole): ActionPresentation => {
 
 const getPendingActionPresentation = (
   action: PendingAction,
-): ActionPresentation =>
-  action.kind === "status"
+): ActionPresentation => {
+  if (action.kind === "delete") {
+    return { icon: Trash2, ...ACTION_PRESENTATION.danger };
+  }
+
+  return action.kind === "status"
     ? getStatusActionPresentation(action.profile.status, action.nextStatus)
     : getRoleActionPresentation(action.nextRole);
+};
 
 const OverviewCard = ({
   icon: Icon,
@@ -312,6 +325,8 @@ export default function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState<AccountStatus | "all">(
     "all",
   );
+  const [deletionFilter, setDeletionFilter] =
+    useState<ProfileDeletionFilter>("current");
   const [sortBy, setSortBy] = useState<ProfileSort>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [isLoading, setIsLoading] = useState(true);
@@ -367,6 +382,7 @@ export default function AdminDashboard() {
       const [nextCounts, result] = await Promise.all([
         getAdminProfileCounts(),
         listAdminProfiles({
+          deletion: deletionFilter,
           page,
           pageSize: PAGE_SIZE,
           role: roleFilter,
@@ -389,7 +405,15 @@ export default function AdminDashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, [page, roleFilter, search, sortBy, sortDirection, statusFilter]);
+  }, [
+    deletionFilter,
+    page,
+    roleFilter,
+    search,
+    sortBy,
+    sortDirection,
+    statusFilter,
+  ]);
 
   useEffect(() => {
     void loadDashboard();
@@ -434,22 +458,28 @@ export default function AdminDashboard() {
 
     try {
       const updatedProfile =
-        pendingAction.kind === "status"
-          ? await updateAdminProfileStatus(
-              pendingAction.profile.id,
-              pendingAction.nextStatus,
-            )
-          : await updateAdminProfileRole(
-              pendingAction.profile.id,
-              pendingAction.nextRole,
-            );
+        pendingAction.kind === "delete"
+          ? await deleteAdminProfile(pendingAction.profile.id)
+          : pendingAction.kind === "status"
+            ? await updateAdminProfileStatus(
+                pendingAction.profile.id,
+                pendingAction.nextStatus,
+              )
+            : await updateAdminProfileRole(
+                pendingAction.profile.id,
+                pendingAction.nextRole,
+              );
 
       if (updatedProfile.id === currentProfile?.id) {
         await refreshProfile();
       }
 
       setSelectedProfile((profile) =>
-        profile?.id === updatedProfile.id ? updatedProfile : profile,
+        pendingAction.kind === "delete"
+          ? null
+          : profile?.id === updatedProfile.id
+            ? updatedProfile
+            : profile,
       );
       showToast({
         description: `${pendingAction.label} completed successfully.`,
@@ -575,7 +605,13 @@ export default function AdminDashboard() {
   };
 
   const actionDescription = pendingAction
-    ? pendingAction.kind === "role" &&
+    ? pendingAction.kind === "delete"
+      ? `Delete ${
+          pendingAction.profile.fullName ??
+          pendingAction.profile.email ??
+          "this user"
+        }? This will remove their application access and hide them from the current user list. Their Auth account and activity history will be retained.`
+      : pendingAction.kind === "role" &&
       pendingAction.profile.id === currentProfile?.id &&
       pendingAction.nextRole === APP_ROLE.USER
       ? "You are changing your own role to user. You will immediately lose administrator access. Continue only if another active administrator exists."
@@ -651,7 +687,7 @@ export default function AdminDashboard() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-[1fr_180px_180px]">
+          <div className="grid gap-3 md:grid-cols-[1fr_160px_160px_160px]">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
               <Input
@@ -697,6 +733,22 @@ export default function AdminDashboard() {
                     <span className="capitalize">{status}</span>
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+            <Select
+              onValueChange={(value: ProfileDeletionFilter) => {
+                setPage(1);
+                setDeletionFilter(value);
+              }}
+              value={deletionFilter}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Filter deleted" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="current">Current users</SelectItem>
+                <SelectItem value="deleted">Deleted users</SelectItem>
+                <SelectItem value="all">All users</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -789,7 +841,13 @@ export default function AdminDashboard() {
                           <RoleBadge role={profile.role} />
                         </TableCell>
                         <TableCell>
-                          <StatusBadge status={profile.status} />
+                          {profile.deletedAt ? (
+                            <span className="inline-flex rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700">
+                              Deleted
+                            </span>
+                          ) : (
+                            <StatusBadge status={profile.status} />
+                          )}
                         </TableCell>
                         <TableCell>{formatDate(profile.createdAt)}</TableCell>
                         <TableCell>{formatDate(profile.lastLoginAt)}</TableCell>
@@ -809,49 +867,71 @@ export default function AdminDashboard() {
                                   <Eye className="size-4" />
                                   View details
                                 </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                {STATUS_ACTIONS[profile.status].map(
-                                  (action) => {
-                                    const presentation =
-                                      getStatusActionPresentation(
-                                        profile.status,
-                                        action.nextStatus,
-                                      );
-                                    const ActionIcon = presentation.icon;
+                                {!profile.deletedAt ? (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    {STATUS_ACTIONS[profile.status].map(
+                                      (action) => {
+                                        const presentation =
+                                          getStatusActionPresentation(
+                                            profile.status,
+                                            action.nextStatus,
+                                          );
+                                        const ActionIcon = presentation.icon;
 
-                                    return (
-                                      <DropdownMenuItem
-                                        className={presentation.itemClassName}
-                                        key={action.nextStatus}
-                                        onClick={() =>
-                                          setPendingAction({
-                                            kind: "status",
-                                            label: action.label,
-                                            nextStatus: action.nextStatus,
-                                            profile,
-                                          })
-                                        }
-                                      >
-                                        <ActionIcon className="size-4" />
-                                        {action.label}
-                                      </DropdownMenuItem>
-                                    );
-                                  },
-                                )}
-                                <DropdownMenuItem
-                                  className={rolePresentation.itemClassName}
-                                  onClick={() =>
-                                    setPendingAction({
-                                      kind: "role",
-                                      label: roleAction.label,
-                                      nextRole: roleAction.nextRole,
-                                      profile,
-                                    })
-                                  }
-                                >
-                                  <RoleActionIcon className="size-4" />
-                                  {roleAction.label}
-                                </DropdownMenuItem>
+                                        return (
+                                          <DropdownMenuItem
+                                            className={
+                                              presentation.itemClassName
+                                            }
+                                            key={action.nextStatus}
+                                            onClick={() =>
+                                              setPendingAction({
+                                                kind: "status",
+                                                label: action.label,
+                                                nextStatus: action.nextStatus,
+                                                profile,
+                                              })
+                                            }
+                                          >
+                                            <ActionIcon className="size-4" />
+                                            {action.label}
+                                          </DropdownMenuItem>
+                                        );
+                                      },
+                                    )}
+                                    <DropdownMenuItem
+                                      className={rolePresentation.itemClassName}
+                                      onClick={() =>
+                                        setPendingAction({
+                                          kind: "role",
+                                          label: roleAction.label,
+                                          nextRole: roleAction.nextRole,
+                                          profile,
+                                        })
+                                      }
+                                    >
+                                      <RoleActionIcon className="size-4" />
+                                      {roleAction.label}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      className={
+                                        ACTION_PRESENTATION.danger.itemClassName
+                                      }
+                                      onClick={() =>
+                                        setPendingAction({
+                                          kind: "delete",
+                                          label: "Delete user",
+                                          profile,
+                                        })
+                                      }
+                                    >
+                                      <Trash2 className="size-4" />
+                                      Delete user
+                                    </DropdownMenuItem>
+                                  </>
+                                ) : null}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           )}
@@ -1168,7 +1248,13 @@ export default function AdminDashboard() {
                 <div>
                   <dt className="text-zinc-500">Status</dt>
                   <dd className="mt-1">
-                    <StatusBadge status={selectedProfile.status} />
+                    {selectedProfile.deletedAt ? (
+                      <span className="inline-flex rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700">
+                        Deleted
+                      </span>
+                    ) : (
+                      <StatusBadge status={selectedProfile.status} />
+                    )}
                   </dd>
                 </div>
                 <div>
@@ -1183,9 +1269,18 @@ export default function AdminDashboard() {
                     {formatDate(selectedProfile.lastLoginAt)}
                   </dd>
                 </div>
+                {selectedProfile.deletedAt ? (
+                  <div>
+                    <dt className="text-zinc-500">Deleted</dt>
+                    <dd className="font-medium">
+                      {formatDate(selectedProfile.deletedAt)}
+                    </dd>
+                  </div>
+                ) : null}
               </dl>
 
-              {selectedProfile.id !== currentProfile?.id ? (
+              {selectedProfile.id !== currentProfile?.id &&
+              !selectedProfile.deletedAt ? (
                 <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
                   {STATUS_ACTIONS[selectedProfile.status].map((action) => {
                     const presentation = getStatusActionPresentation(
@@ -1217,6 +1312,21 @@ export default function AdminDashboard() {
                       </Button>
                     );
                   })}
+                  <Button
+                    disabled={isMutating}
+                    onClick={() =>
+                      setPendingAction({
+                        kind: "delete",
+                        label: "Delete user",
+                        profile: selectedProfile,
+                      })
+                    }
+                    size="sm"
+                    variant="destructive"
+                  >
+                    <Trash2 className="size-4" />
+                    Delete user
+                  </Button>
                 </div>
               ) : null}
             </div>
@@ -1230,7 +1340,11 @@ export default function AdminDashboard() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm account change</AlertDialogTitle>
+            <AlertDialogTitle>
+              {pendingAction?.kind === "delete"
+                ? "Confirm user deletion"
+                : "Confirm account change"}
+            </AlertDialogTitle>
             <AlertDialogDescription>{actionDescription}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1248,7 +1362,11 @@ export default function AdminDashboard() {
               ) : PendingActionIcon ? (
                 <PendingActionIcon className="size-4" />
               ) : null}
-              {isMutating ? "Updating..." : (pendingAction?.label ?? "Confirm")}
+              {isMutating
+                ? pendingAction?.kind === "delete"
+                  ? "Deleting..."
+                  : "Updating..."
+                : (pendingAction?.label ?? "Confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

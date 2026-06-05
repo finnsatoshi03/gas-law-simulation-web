@@ -52,6 +52,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { MoleculeBackground } from "./components/MoleculeBackground";
 import { AccountStatusRoute } from "./components/account/AccountStatusRoute";
 import {
+  DeletedAccountPage,
   PendingApprovalPage,
   ProfileErrorPage,
   RejectedAccountPage,
@@ -70,6 +71,7 @@ const ACCOUNT_STATUS_ROUTES = [
   "/account/pending",
   "/account/suspended",
   "/account/rejected",
+  "/account/deleted",
   "/account/profile-error",
 ];
 
@@ -330,6 +332,14 @@ const AnimatedRoutes = () => {
           element={
             <AccountStatusRoute expectedStatus={ACCOUNT_STATUS.REJECTED}>
               <RejectedAccountPage />
+            </AccountStatusRoute>
+          }
+        />
+        <Route
+          path="account/deleted"
+          element={
+            <AccountStatusRoute deleted>
+              <DeletedAccountPage />
             </AccountStatusRoute>
           }
         />

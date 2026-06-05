@@ -16,6 +16,7 @@ export const PERMISSION = {
 export type Permission = (typeof PERMISSION)[keyof typeof PERMISSION];
 
 interface PermissionProfile {
+  deletedAt?: string | null;
   role: AppRole;
   status: AccountStatus;
 }
@@ -35,7 +36,7 @@ export const isAppRole = (value: unknown): value is AppRole =>
 export const hasRole = (
   profile: PermissionProfile | null,
   role: AppRole
-) => profile?.role === role;
+) => profile?.role === role && !profile.deletedAt;
 
 export const isAdmin = (profile: PermissionProfile | null) =>
   hasRole(profile, APP_ROLE.ADMIN);
@@ -46,6 +47,7 @@ export const canAccess = (
 ) =>
   Boolean(
     profile &&
+      !profile.deletedAt &&
       profile.status === ACCOUNT_STATUS.ACTIVE &&
       ROLE_PERMISSIONS[profile.role].includes(permission)
   );

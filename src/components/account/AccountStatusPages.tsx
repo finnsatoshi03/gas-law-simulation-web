@@ -5,6 +5,7 @@ import {
   Loader2,
   LogOut,
   RefreshCw,
+  Trash2,
   TriangleAlert,
 } from "lucide-react";
 
@@ -123,6 +124,40 @@ export const SuspendedAccountPage = () => (
 export const RejectedAccountPage = () => (
   <AccountStatusPage status={ACCOUNT_STATUS.REJECTED} />
 );
+
+export const DeletedAccountPage = () => {
+  const { user } = useAuth();
+  const { handleLogout, isLoggingOut } = useLogout();
+
+  return (
+    <AuthPage
+      center
+      description="This account has been removed from application access. Contact an administrator if you believe this was a mistake."
+      icon={<StatusIcon icon={Trash2} />}
+      title="Account deleted"
+      footer={
+        user?.email ? (
+          <span className="text-[#6f6a92]">Signed in as {user.email}</span>
+        ) : undefined
+      }
+    >
+      <button
+        aria-busy={isLoggingOut}
+        className={authPrimaryButtonClass}
+        disabled={isLoggingOut}
+        onClick={handleLogout}
+        type="button"
+      >
+        {isLoggingOut ? (
+          <Loader2 className="size-[18px] animate-spin" />
+        ) : (
+          <LogOut className="size-[18px]" />
+        )}
+        {isLoggingOut ? "Logging out..." : "Log out"}
+      </button>
+    </AuthPage>
+  );
+};
 
 export const ProfileErrorPage = () => {
   const { user } = useAuth();

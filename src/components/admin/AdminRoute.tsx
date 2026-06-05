@@ -17,6 +17,10 @@ export const AdminRoute = ({ children }: { children: ReactNode }) => {
     return <Navigate replace to="/account/profile-error" />;
   }
 
+  if (profile.deletedAt) {
+    return <Navigate replace to="/account/deleted" />;
+  }
+
   if (profile.status !== ACCOUNT_STATUS.ACTIVE) {
     return <Navigate replace to={getAccountStatusPath(profile.status)} />;
   }
