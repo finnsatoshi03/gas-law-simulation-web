@@ -23,6 +23,7 @@ import CylinderWithMole from "./CylinderWithMoles";
 import TemperatureSlider from "./TemperatureSlider";
 import BarometerSlider from "./BarometerSlider";
 import ToolHint from "./ToolHint";
+import BarometerNeedle from "./BarometerNeedle";
 
 import {
   Tooltip,
@@ -58,7 +59,7 @@ export interface Props {
   onPressureChange?: (pressure: number, target: "initial" | "final") => void;
   onTemperatureChange?: (
     temperature: number,
-    target: "initial" | "final"
+    target: "initial" | "final",
   ) => void;
   onMoleculeCountChange?: (count: number) => void;
   controlState?: {
@@ -113,7 +114,6 @@ const GasLawsSimulation: React.FC<Props> = ({
   const [animatingVolume, setAnimatingVolume] = useState(false);
 
   const [barometerAngle, setBarometerAngle] = useState(0);
-  const [handShake, setHandShake] = useState(0);
 
   const [pumpMoleculeCount, setPumpMoleculeCount] = useState(0);
   const lastPumpActionTime = useRef(Date.now());
@@ -147,11 +147,12 @@ const GasLawsSimulation: React.FC<Props> = ({
     volume: false,
     temperature: false,
     pressure: false,
+    playPause: false,
   });
 
   const dismissHint = (tool: keyof typeof dismissedHints) => {
     setDismissedHints((prev) =>
-      prev[tool] ? prev : { ...prev, [tool]: true }
+      prev[tool] ? prev : { ...prev, [tool]: true },
     );
   };
 
@@ -167,10 +168,11 @@ const GasLawsSimulation: React.FC<Props> = ({
 
   const constrainedMoleculeCount = Math.max(
     MIN_MOLECULE_COUNT,
-    Math.min(MAX_MOLECULE_COUNT, moleculeCount)
+    Math.min(MAX_MOLECULE_COUNT, moleculeCount),
   );
 
   const togglePlayPause = () => {
+    dismissHint("playPause");
     setIsPlaying((prev) => !prev);
     setIsUserControlling(false);
   };
@@ -258,7 +260,7 @@ const GasLawsSimulation: React.FC<Props> = ({
     // Constrain position to valid range
     return Math.min(
       MAX_VOLUME_POSITION,
-      Math.max(MIN_VOLUME_POSITION, position)
+      Math.max(MIN_VOLUME_POSITION, position),
     );
   };
 
@@ -296,7 +298,7 @@ const GasLawsSimulation: React.FC<Props> = ({
     setIsUserControlling(true);
     const newPressure = Math.min(
       sliderValueToPressure(value),
-      settings.maxDisplayPressure
+      settings.maxDisplayPressure,
     );
     setCurrentPressure(newPressure);
     setBarometerAngle(calculateBarometerAngle(newPressure));
@@ -304,21 +306,25 @@ const GasLawsSimulation: React.FC<Props> = ({
   };
 
   const sliderValue = pressureToSliderValue(
-    Math.min(currentPressure, settings.maxDisplayPressure)
+    Math.min(currentPressure, settings.maxDisplayPressure),
   );
 
   useEffect(() => {
-    const shakeInterval = setInterval(() => {
-      const maxShake = Math.min((constrainedMoleculeCount / 500) * 10, 10); // Increase the multiplier to 10
-      const newShake = Math.sin(Date.now() * 0.1) * maxShake; // Increase the frequency multiplier to 0.1
-      setHandShake(newShake);
-    }, 50);
-
-    return () => clearInterval(shakeInterval);
-  }, [constrainedMoleculeCount]);
-
-  useEffect(() => {
     if (!isPlaying) {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (pressureAnimationRef.current) {
+        cancelAnimationFrame(pressureAnimationRef.current);
+      }
+      return;
+    }
+
+    // While the user is hands-on with a control, the scripted animation yields
+    // so the two don't fight over the same state. When the user lets go,
+    // `isUserControlling` flips back to false, this effect re-runs, and the
+    // animation resumes from the initial values.
+    if (isUserControlling) {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
@@ -337,7 +343,7 @@ const GasLawsSimulation: React.FC<Props> = ({
       const startTime = performance.now();
 
       const animateVolume = (currentTime: number) => {
-        if (!isPlaying) {
+        if (!isPlaying || isUserControlling) {
           setAnimatingVolume(false);
           return;
         }
@@ -367,11 +373,11 @@ const GasLawsSimulation: React.FC<Props> = ({
     // Pressure animation
     const clampedInitialPressure = Math.min(
       convertedInitialPressure,
-      settings.maxDisplayPressure
+      settings.maxDisplayPressure,
     );
     const clampedFinalPressure = Math.min(
       convertedFinalPressure,
-      settings.maxDisplayPressure
+      settings.maxDisplayPressure,
     );
     const startAngle = calculateBarometerAngle(clampedInitialPressure);
     const endAngle = calculateBarometerAngle(clampedFinalPressure);
@@ -388,7 +394,7 @@ const GasLawsSimulation: React.FC<Props> = ({
       const animatedPressure = Math.min(
         clampedInitialPressure +
           (clampedFinalPressure - clampedInitialPressure) * smoothStep,
-        settings.maxDisplayPressure
+        settings.maxDisplayPressure,
       );
 
       setCurrentPressure(animatedPressure);
@@ -411,6 +417,7 @@ const GasLawsSimulation: React.FC<Props> = ({
     };
   }, [
     isPlaying,
+    isUserControlling,
     convertedInitialVolume,
     convertedFinalVolume,
     convertedInitialPressure,
@@ -438,11 +445,11 @@ const GasLawsSimulation: React.FC<Props> = ({
     // Clamp initial and final pressures to maximum display pressure
     const clampedInitialPressure = Math.min(
       convertedInitialPressure,
-      settings.maxDisplayPressure
+      settings.maxDisplayPressure,
     );
     const clampedFinalPressure = Math.min(
       convertedFinalPressure,
-      settings.maxDisplayPressure
+      settings.maxDisplayPressure,
     );
 
     const startAngle = calculateBarometerAngle(clampedInitialPressure);
@@ -476,7 +483,7 @@ const GasLawsSimulation: React.FC<Props> = ({
       const animatedPressure = Math.min(
         clampedInitialPressure +
           (clampedFinalPressure - clampedInitialPressure) * smoothStep,
-        settings.maxDisplayPressure
+        settings.maxDisplayPressure,
       );
 
       setCurrentPressure(animatedPressure);
@@ -508,70 +515,12 @@ const GasLawsSimulation: React.FC<Props> = ({
   ]);
 
   useEffect(() => {
-    const handleMouseUp = () => {
-      if (isPumpDragging) {
-        setPumpOffset(0);
-        lastPumpPosition.current = 0;
-        isPumpingDown.current = false;
-        handlePumpRelease();
-      }
-      setIsPumpDragging(false);
-      setIsVolumeDragging(false);
-      setIsUserControlling(false);
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (isPumpDragging && canControlPump) {
-        const currentY = e.clientY;
-        const newOffset = currentY - pumpStartY;
-        const constrainedOffset = Math.max(
-          -MAX_PUMP_MOVEMENT,
-          Math.min(0, newOffset)
-        );
-        setPumpOffset(constrainedOffset);
-      }
-
-      if (isVolumeDragging && canControlVolume) {
-        const deltaY = e.clientY - volumeStartY;
-        setVolumePosition((prev) => {
-          const newPosition = Math.max(
-            MIN_VOLUME_POSITION,
-            Math.min(MAX_VOLUME_POSITION, prev + deltaY)
-          );
-
-          // Calculate and emit the new volume
-          const newVolume = calculateVolumeFromPosition(newPosition);
-          onVolumeChange?.(newVolume, controlState.volume);
-
-          return newPosition;
-        });
-        setVolumeStartY(e.clientY);
-      }
-    };
-
-    window.addEventListener("mouseup", handleMouseUp);
-    window.addEventListener("mousemove", handleMouseMove);
-
-    return () => {
-      window.removeEventListener("mouseup", handleMouseUp);
-      window.removeEventListener("mousemove", handleMouseMove);
-    };
-  }, [
-    isPumpDragging,
-    isVolumeDragging,
-    pumpStartY,
-    volumeStartY,
-    canControlPump,
-    canControlVolume,
-  ]);
-
-  useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (isPumpDragging && canControlPump) {
         const newOffset = e.clientY - pumpStartY;
         const constrainedOffset = Math.max(
           -MAX_PUMP_MOVEMENT,
-          Math.min(0, newOffset)
+          Math.min(0, newOffset),
         );
         setPumpOffset(constrainedOffset);
       }
@@ -581,7 +530,7 @@ const GasLawsSimulation: React.FC<Props> = ({
         setVolumePosition((prev) => {
           const newPosition = Math.max(
             MIN_VOLUME_POSITION,
-            Math.min(MAX_VOLUME_POSITION, prev + deltaY)
+            Math.min(MAX_VOLUME_POSITION, prev + deltaY),
           );
           const newVolume = calculateVolumeFromPosition(newPosition);
           onVolumeChange?.(newVolume, controlState.volume);
@@ -596,7 +545,7 @@ const GasLawsSimulation: React.FC<Props> = ({
         const newOffset = e.touches[0].clientY - pumpStartY;
         const constrainedOffset = Math.max(
           -MAX_PUMP_MOVEMENT,
-          Math.min(0, newOffset)
+          Math.min(0, newOffset),
         );
         setPumpOffset(constrainedOffset);
       }
@@ -606,7 +555,7 @@ const GasLawsSimulation: React.FC<Props> = ({
         setVolumePosition((prev) => {
           const newPosition = Math.max(
             MIN_VOLUME_POSITION,
-            Math.min(MAX_VOLUME_POSITION, prev + deltaY)
+            Math.min(MAX_VOLUME_POSITION, prev + deltaY),
           );
           const newVolume = calculateVolumeFromPosition(newPosition);
           onVolumeChange?.(newVolume, controlState.volume);
@@ -665,21 +614,21 @@ const GasLawsSimulation: React.FC<Props> = ({
   const pumpCursor = !canControlPump
     ? "not-allowed"
     : isPumpDragging
-    ? "grabbing"
-    : "grab";
+      ? "grabbing"
+      : "grab";
   const volumeCursor = !canControlVolume
     ? "not-allowed"
     : isVolumeDragging
-    ? "grabbing"
-    : animatingVolume
-    ? "wait"
-    : "grab";
+      ? "grabbing"
+      : animatingVolume
+        ? "wait"
+        : "grab";
 
   return (
     <div
       className={cn(
         `boyles-simulation relative h-[90vh] w-full select-none`,
-        className
+        className,
       )}
     >
       <svg
@@ -807,13 +756,9 @@ const GasLawsSimulation: React.FC<Props> = ({
             <TooltipTrigger asChild>
               <g id="Barometer" className="simulation-barometer">
                 <Barometer />
-                <path
-                  id="Hand"
-                  className="cls-28"
-                  transform={`rotate(${
-                    barometerAngle + handShake
-                  }, 451.09, 440.5)`}
-                  d="m437.39,468.06l21.4-36.4c.57-.95.2-2.24-.88-2.76l-2.25-1.09c-.99-.48-2.19-.07-2.67.92l-17.36,38.37c-.35,1.17,1.14,2,1.75.97Z"
+                <BarometerNeedle
+                  angle={barometerAngle}
+                  moleculeCount={constrainedMoleculeCount}
                 />
                 <circle className="cls-17" cx="451.1" cy="440.5" r="4.3" />
                 <path
@@ -960,6 +905,18 @@ const GasLawsSimulation: React.FC<Props> = ({
           <path
             className="cls-14"
             d="m172.7,370s-119.1,3.4-146.5,26.9c-3.8,3.6-9.1,8.7.8,16.9,11.2,6.1,29.3,21,157.4,26.1,23.4.6,68,.5,119.2-6.6,26.5-4.3,59.4-9.9,73.3-23.4,2.1-5.3,13.4-17.3-66.4-32.7-49-6.1-68.2-6.8-78.6-7.1"
+          />
+
+          {/* Rendered last in the Cylinder group so it paints on top of the
+              cylinder instead of behind it. */}
+          <ToolHint
+            x={isMobile ? -75 : -80}
+            y={isMobile ? 200 : 712}
+            width={130}
+            height={40}
+            label="Press play!"
+            pointer="bottom"
+            visible={!isPlaying && !dismissedHints.playPause}
           />
         </g>
         <Tooltip>
