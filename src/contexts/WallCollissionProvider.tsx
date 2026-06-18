@@ -8,18 +8,30 @@ import React, {
   useRef,
 } from "react";
 
-interface WallCollisionContextType {
+// Frequently-changing recording state (re-renders consumers on every update).
+interface WallCollisionState {
   collisionCount: number;
   elapsedTime: number;
   isPlaying: boolean;
+}
+
+// Referentially-stable actions (never change identity, so consuming them alone
+// never causes a re-render — important for the molecule simulation, which only
+// needs `incrementCollision`).
+interface WallCollisionActions {
   startRecording: () => void;
   stopRecording: () => void;
   resetRecording: () => void;
   incrementCollision: () => void;
 }
 
-const WallCollisionContext = createContext<
-  WallCollisionContextType | undefined
+type WallCollisionContextType = WallCollisionState & WallCollisionActions;
+
+const WallCollisionStateContext = createContext<WallCollisionState | undefined>(
+  undefined
+);
+const WallCollisionActionsContext = createContext<
+  WallCollisionActions | undefined
 >(undefined);
 
 export const WallCollisionProvider: React.FC<{
@@ -96,40 +108,54 @@ export const WallCollisionProvider: React.FC<{
     setIsPlaying(false);
   }, []);
 
-  const value = useMemo(
+  const stateValue = useMemo(
+    () => ({ collisionCount, elapsedTime, isPlaying }),
+    [collisionCount, elapsedTime, isPlaying]
+  );
+
+  // All callbacks are referentially stable, so this object is created once and
+  // never changes — consumers of actions-only never re-render.
+  const actionsValue = useMemo(
     () => ({
-      collisionCount,
-      elapsedTime,
-      isPlaying,
       startRecording,
       stopRecording,
       resetRecording,
       incrementCollision,
     }),
-    [
-      collisionCount,
-      elapsedTime,
-      isPlaying,
-      startRecording,
-      stopRecording,
-      resetRecording,
-      incrementCollision,
-    ]
+    [startRecording, stopRecording, resetRecording, incrementCollision]
   );
 
   return (
-    <WallCollisionContext.Provider value={value}>
-      {children}
-    </WallCollisionContext.Provider>
+    <WallCollisionActionsContext.Provider value={actionsValue}>
+      <WallCollisionStateContext.Provider value={stateValue}>
+        {children}
+      </WallCollisionStateContext.Provider>
+    </WallCollisionActionsContext.Provider>
   );
 };
 
-export const useWallCollisions = () => {
-  const context = useContext(WallCollisionContext);
+/** Actions only — referentially stable, so using this never triggers a
+ *  re-render when collision counts change. Prefer this when you only need to
+ *  report collisions or control recording. */
+export const useWallCollisionActions = (): WallCollisionActions => {
+  const context = useContext(WallCollisionActionsContext);
   if (context === undefined) {
+    throw new Error(
+      "useWallCollisionActions must be used within a WallCollisionProvider"
+    );
+  }
+  return context;
+};
+
+/** Full state + actions. Re-renders the consumer whenever collision count,
+ *  elapsed time, or playing state changes. */
+export const useWallCollisions = (): WallCollisionContextType => {
+  const state = useContext(WallCollisionStateContext);
+  const actions = useContext(WallCollisionActionsContext);
+  if (state === undefined || actions === undefined) {
     throw new Error(
       "useWallCollisions must be used within a WallCollisionProvider"
     );
   }
-  return context;
+  return { ...state, ...actions };
 };

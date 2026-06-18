@@ -2,7 +2,7 @@ import { memo, useEffect, useMemo, useRef, useState } from "react";
 
 import { convertTemperature } from "@/lib/helpers";
 
-import { useWallCollisions } from "@/contexts/WallCollissionProvider";
+import { useWallCollisionActions } from "@/contexts/WallCollissionProvider";
 import { useSimulationSettings } from "@/contexts/SettingsProvider";
 
 import { Cylinder } from "./Paths";
@@ -160,7 +160,7 @@ export const CylinderWithMole: React.FC<CylinderWithMoleProps> = ({
   const prevMoleculeCountRef = useRef(0);
 
   const { settings } = useSimulationSettings();
-  const { incrementCollision } = useWallCollisions();
+  const { incrementCollision } = useWallCollisionActions();
 
   const currentTopBoundary = CYLINDER_BOUNDS.top + volumePosition;
   const currentVolume =

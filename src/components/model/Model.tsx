@@ -33,6 +33,7 @@ import {
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useRafThrottle } from "@/hooks/useRafThrottle";
 
 // Define types for type safety
 type GasLaw =
@@ -137,6 +138,13 @@ const GasLawsSimulation: React.FC<Props> = ({
   const canControlVolume = !["gayLussac"].includes(gasLaw);
   const canControlTemperature = !["boyles", "avogadro"].includes(gasLaw);
   const canControlPressure = !["charles", "avogadro"].includes(gasLaw);
+
+  // These callbacks bubble up to the page on every pointer-move while dragging,
+  // which re-renders the page and the whole tool tree. Throttle them to one
+  // emit per animation frame (latest value preserved) to keep dragging smooth.
+  const emitVolumeChange = useRafThrottle(onVolumeChange);
+  const emitPressureChange = useRafThrottle(onPressureChange);
+  const emitTemperatureChange = useRafThrottle(onTemperatureChange);
 
   // Attention-grabbing hint bubbles ("Pump me!", "Slide me!") that nudge the
   // user toward each enabled tool. Each bubble is dismissed the first time the
@@ -302,7 +310,7 @@ const GasLawsSimulation: React.FC<Props> = ({
     );
     setCurrentPressure(newPressure);
     setBarometerAngle(calculateBarometerAngle(newPressure));
-    onPressureChange?.(newPressure, controlState.pressure);
+    emitPressureChange(newPressure, controlState.pressure);
   };
 
   const sliderValue = pressureToSliderValue(
@@ -533,7 +541,7 @@ const GasLawsSimulation: React.FC<Props> = ({
             Math.min(MAX_VOLUME_POSITION, prev + deltaY),
           );
           const newVolume = calculateVolumeFromPosition(newPosition);
-          onVolumeChange?.(newVolume, controlState.volume);
+          emitVolumeChange(newVolume, controlState.volume);
           return newPosition;
         });
         setVolumeStartY(e.clientY);
@@ -558,7 +566,7 @@ const GasLawsSimulation: React.FC<Props> = ({
             Math.min(MAX_VOLUME_POSITION, prev + deltaY),
           );
           const newVolume = calculateVolumeFromPosition(newPosition);
-          onVolumeChange?.(newVolume, controlState.volume);
+          emitVolumeChange(newVolume, controlState.volume);
           return newPosition;
         });
         setVolumeStartY(e.touches[0].clientY);
@@ -948,7 +956,7 @@ const GasLawsSimulation: React.FC<Props> = ({
               setTemperature={(temp) => {
                 dismissHint("temperature");
                 setTemperature(temp);
-                onTemperatureChange?.(temp, controlState.temperature);
+                emitTemperatureChange(temp, controlState.temperature);
               }}
               unit={temperatureUnit || "K"}
               disabled={!canControlTemperature}
