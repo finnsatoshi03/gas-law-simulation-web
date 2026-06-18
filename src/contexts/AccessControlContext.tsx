@@ -17,6 +17,7 @@ import {
   updateAppAccessSettings as updateAppAccessSettingsRequest,
   updateFeatureAccessSetting as updateFeatureAccessSettingRequest,
 } from "@/lib/access-control";
+import { isDevAuthBypassEnabled } from "@/lib/dev-bypass";
 import { FEATURE_REGISTRY, FeatureKey } from "@/lib/features";
 import { getSupabaseClient } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
@@ -61,6 +62,14 @@ export const AccessControlProvider = ({ children }: { children: ReactNode }) => 
   const [hasLoaded, setHasLoaded] = useState(false);
 
   const refreshAccessControls = useCallback(async () => {
+    // Dev-only bypass: the mock admin unlocks everything, so skip Supabase.
+    if (isDevAuthBypassEnabled) {
+      setAppSettings(FALLBACK_APP_ACCESS_SETTINGS);
+      setFeatureSettings(new Map());
+      setHasLoaded(true);
+      return;
+    }
+
     const requestId = requestIdRef.current + 1;
     requestIdRef.current = requestId;
 
@@ -97,7 +106,7 @@ export const AccessControlProvider = ({ children }: { children: ReactNode }) => 
   }, [refreshAccessControls]);
 
   useEffect(() => {
-    if (!isAuthenticated || !profileId) {
+    if (isDevAuthBypassEnabled || !isAuthenticated || !profileId) {
       return;
     }
 

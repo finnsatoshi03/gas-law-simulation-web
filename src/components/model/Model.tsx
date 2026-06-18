@@ -22,6 +22,7 @@ import { LinearGradients } from "./LinearGradients";
 import CylinderWithMole from "./CylinderWithMoles";
 import TemperatureSlider from "./TemperatureSlider";
 import BarometerSlider from "./BarometerSlider";
+import ToolHint from "./ToolHint";
 
 import {
   Tooltip,
@@ -135,6 +136,24 @@ const GasLawsSimulation: React.FC<Props> = ({
   const canControlPump = ![""].includes(gasLaw);
   const canControlVolume = !["gayLussac"].includes(gasLaw);
   const canControlTemperature = !["boyles", "avogadro"].includes(gasLaw);
+  const canControlPressure = !["charles", "avogadro"].includes(gasLaw);
+
+  // Attention-grabbing hint bubbles ("Pump me!", "Slide me!") that nudge the
+  // user toward each enabled tool. Each bubble is dismissed the first time the
+  // user interacts with its tool.
+  const [dismissedHints, setDismissedHints] = useState({
+    gas: false,
+    pump: false,
+    volume: false,
+    temperature: false,
+    pressure: false,
+  });
+
+  const dismissHint = (tool: keyof typeof dismissedHints) => {
+    setDismissedHints((prev) =>
+      prev[tool] ? prev : { ...prev, [tool]: true }
+    );
+  };
 
   // Constants remain unchanged
   const MAX_PUMP_MOVEMENT = 80;
@@ -161,6 +180,7 @@ const GasLawsSimulation: React.FC<Props> = ({
     if (!canControlPump) return;
     e.preventDefault();
     e.stopPropagation();
+    dismissHint("pump");
     setIsPumpDragging(true);
     setPumpStartY(e.clientY - pumpOffset);
     lastPumpPosition.current = pumpOffset;
@@ -170,6 +190,7 @@ const GasLawsSimulation: React.FC<Props> = ({
     if (!canControlPump) return;
     e.preventDefault();
     e.stopPropagation();
+    dismissHint("pump");
     setIsPumpDragging(true);
     setPumpStartY(e.touches[0].clientY - pumpOffset);
     lastPumpPosition.current = pumpOffset;
@@ -180,6 +201,7 @@ const GasLawsSimulation: React.FC<Props> = ({
     if (!canControlVolume) return;
     e.preventDefault();
     e.stopPropagation();
+    dismissHint("volume");
     setIsUserControlling(true);
     setIsVolumeDragging(true);
     setVolumeStartY(e.clientY);
@@ -189,6 +211,7 @@ const GasLawsSimulation: React.FC<Props> = ({
     if (!canControlVolume) return;
     e.preventDefault();
     e.stopPropagation();
+    dismissHint("volume");
     setIsUserControlling(true);
     setIsVolumeDragging(true);
     setVolumeStartY(e.touches[0].clientY);
@@ -206,6 +229,7 @@ const GasLawsSimulation: React.FC<Props> = ({
   };
 
   const toggleGasSelection = (gas: string) => {
+    dismissHint("gas");
     setSelectedGases((prev) => {
       if (prev.includes(gas)) {
         if (prev.length === 1) return prev;
@@ -268,6 +292,7 @@ const GasLawsSimulation: React.FC<Props> = ({
 
   // Handle slider change
   const handleSliderChange = (value: number) => {
+    dismissHint("pressure");
     setIsUserControlling(true);
     const newPressure = Math.min(
       sliderValueToPressure(value),
@@ -739,6 +764,16 @@ const GasLawsSimulation: React.FC<Props> = ({
                 </p>
               </TooltipContent>
             </Tooltip>
+
+            <ToolHint
+              x={605}
+              y={485}
+              width={170}
+              height={44}
+              label="Pick a gas!"
+              pointer="bottom"
+              visible={!dismissedHints.gas}
+            />
           </g>
 
           <Tooltip>
@@ -795,7 +830,31 @@ const GasLawsSimulation: React.FC<Props> = ({
               </p>
             </TooltipContent>
           </Tooltip>
+
+          {canControlPump && (
+            <ToolHint
+              x={432}
+              y={556}
+              width={120}
+              height={44}
+              label="Pump me!"
+              pointer="bottom"
+              visible={!dismissedHints.pump}
+            />
+          )}
         </g>
+
+        {canControlPressure && (
+          <ToolHint
+            x={455}
+            y={222}
+            width={140}
+            height={40}
+            label="Slide me!"
+            pointer="bottom"
+            visible={!dismissedHints.pressure}
+          />
+        )}
         <Tooltip>
           <TooltipTrigger asChild>
             <foreignObject x="500" y="265" width="50" height="150">
@@ -886,6 +945,18 @@ const GasLawsSimulation: React.FC<Props> = ({
               </p>
             </TooltipContent>
           </Tooltip>
+
+          {canControlVolume && (
+            <ToolHint
+              x={245}
+              y={190}
+              width={120}
+              height={44}
+              label="Drag me!"
+              pointer="left"
+              visible={!dismissedHints.volume}
+            />
+          )}
           <path
             className="cls-14"
             d="m172.7,370s-119.1,3.4-146.5,26.9c-3.8,3.6-9.1,8.7.8,16.9,11.2,6.1,29.3,21,157.4,26.1,23.4.6,68,.5,119.2-6.6,26.5-4.3,59.4-9.9,73.3-23.4,2.1-5.3,13.4-17.3-66.4-32.7-49-6.1-68.2-6.8-78.6-7.1"
@@ -918,6 +989,7 @@ const GasLawsSimulation: React.FC<Props> = ({
             <TemperatureSlider
               temperature={temperature}
               setTemperature={(temp) => {
+                dismissHint("temperature");
                 setTemperature(temp);
                 onTemperatureChange?.(temp, controlState.temperature);
               }}
@@ -933,6 +1005,18 @@ const GasLawsSimulation: React.FC<Props> = ({
             </p>
           </TooltipContent>
         </Tooltip>
+
+        {canControlTemperature && (
+          <ToolHint
+            x={120}
+            y={758}
+            width={140}
+            height={40}
+            label="Slide me!"
+            pointer="bottom"
+            visible={!dismissedHints.temperature}
+          />
+        )}
       </svg>
     </div>
   );

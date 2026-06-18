@@ -10,6 +10,10 @@ import {
 } from "react";
 
 import { getSafeAuthErrorMessage } from "@/lib/auth-errors";
+import {
+  DEV_MOCK_SESSION,
+  isDevAuthBypassEnabled,
+} from "@/lib/dev-bypass";
 import { getOAuthRedirectUrl, OAuthProvider } from "@/lib/oauth";
 import {
   getSupabaseClient,
@@ -42,11 +46,18 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [session, setSession] = useState<Session | null>(
+    isDevAuthBypassEnabled ? DEV_MOCK_SESSION : null
+  );
+  const [isLoading, setIsLoading] = useState(!isDevAuthBypassEnabled);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
   useEffect(() => {
+    // Dev-only bypass: skip Supabase entirely and keep the injected mock session.
+    if (isDevAuthBypassEnabled) {
+      return;
+    }
+
     if (!supabase) {
       setIsLoading(false);
       return;
@@ -157,6 +168,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const logout = useCallback(async () => {
+    if (isDevAuthBypassEnabled) {
+      setSession(null);
+      setIsPasswordRecovery(false);
+      return;
+    }
+
     try {
       const { error } = await getSupabaseClient().auth.signOut({
         scope: "local",
@@ -237,7 +254,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     ]
   );
 
-  if (supabaseConfigurationError) {
+  if (supabaseConfigurationError && !isDevAuthBypassEnabled) {
     return (
       <main className="grid min-h-screen place-items-center bg-zinc-50 p-6">
         <section className="max-w-2xl rounded-xl border border-red-200 bg-white p-6 shadow">

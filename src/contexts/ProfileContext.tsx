@@ -11,6 +11,7 @@ import {
 
 import { useAuth } from "@/contexts/AuthContext";
 import { AccountStatus, isAccountStatus } from "@/lib/account-status";
+import { DEV_MOCK_PROFILE, isDevAuthBypassEnabled } from "@/lib/dev-bypass";
 import { AppRole, isAppRole } from "@/lib/permissions";
 import { getSupabaseClient } from "@/lib/supabase";
 
@@ -84,6 +85,11 @@ export const ProfileProvider = ({ children }: { children: ReactNode }) => {
   const [isRequestLoading, setIsRequestLoading] = useState(false);
 
   const refreshProfile = useCallback(async () => {
+    // Dev-only bypass: never touch Supabase, the mock profile is served below.
+    if (isDevAuthBypassEnabled) {
+      return;
+    }
+
     const requestId = requestIdRef.current + 1;
     requestIdRef.current = requestId;
 
@@ -154,7 +160,7 @@ export const ProfileProvider = ({ children }: { children: ReactNode }) => {
   }, [refreshProfile]);
 
   useEffect(() => {
-    if (!userId) {
+    if (isDevAuthBypassEnabled || !userId) {
       return;
     }
 
@@ -180,6 +186,15 @@ export const ProfileProvider = ({ children }: { children: ReactNode }) => {
 
   const value = useMemo(
     () => {
+      if (isDevAuthBypassEnabled) {
+        return {
+          error: null,
+          isLoading: false,
+          profile: DEV_MOCK_PROFILE,
+          refreshProfile,
+        };
+      }
+
       const hasLoadedProfileForCurrentUser =
         Boolean(userId) &&
         loadedUserId === userId &&
