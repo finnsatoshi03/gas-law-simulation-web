@@ -378,17 +378,59 @@ export const CylinderWithMole: React.FC<CylinderWithMoleProps> = ({
       return;
     }
 
-    // Pairwise collisions
-    for (let i = 0; i < molecules.length; i++) {
-      for (let j = i + 1; j < molecules.length; j++) {
-        const mol1 = molecules[i];
-        const mol2 = molecules[j];
+    // Broad-phase collisions via a uniform spatial grid. Instead of testing
+    // every pair (O(n²) — ~125k checks at 500 molecules), bucket molecules into
+    // cells sized to the largest interaction distance and only test each
+    // molecule against its own cell and the 8 neighbours. This brings the
+    // typical cost down to roughly O(n).
+    if (molecules.length > 1) {
+      let maxRadius = 0;
+      for (let i = 0; i < molecules.length; i++) {
+        if (molecules[i].radius > maxRadius) maxRadius = molecules[i].radius;
+      }
+      // Cell size = max possible contact distance (two largest molecules), so a
+      // colliding pair is always within one cell of each other on both axes.
+      const cellSize = Math.max(1, maxRadius * 2);
 
-        const dx = mol2.x - mol1.x;
-        const dy = mol2.y - mol1.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance <= mol1.radius + mol2.radius) {
-          handleCollision(mol1, mol2);
+      const grid = new Map<number, number[]>();
+      // Pack (cellX, cellY) into a single integer key; offset keeps it positive.
+      const keyOf = (mx: number, my: number) =>
+        (Math.floor(my / cellSize) + 2048) * 65536 +
+        (Math.floor(mx / cellSize) + 2048);
+
+      for (let i = 0; i < molecules.length; i++) {
+        const key = keyOf(molecules[i].x, molecules[i].y);
+        const bucket = grid.get(key);
+        if (bucket) bucket.push(i);
+        else grid.set(key, [i]);
+      }
+
+      for (let i = 0; i < molecules.length; i++) {
+        const mol1 = molecules[i];
+        const cellX = Math.floor(mol1.x / cellSize);
+        const cellY = Math.floor(mol1.y / cellSize);
+
+        for (let ox = -1; ox <= 1; ox++) {
+          for (let oy = -1; oy <= 1; oy++) {
+            const bucket = grid.get(
+              (cellY + oy + 2048) * 65536 + (cellX + ox + 2048)
+            );
+            if (!bucket) continue;
+
+            for (let b = 0; b < bucket.length; b++) {
+              const j = bucket[b];
+              // Each unordered pair is visited once (the lower index drives it).
+              if (j <= i) continue;
+
+              const mol2 = molecules[j];
+              const dx = mol2.x - mol1.x;
+              const dy = mol2.y - mol1.y;
+              const distance = Math.sqrt(dx * dx + dy * dy);
+              if (distance <= mol1.radius + mol2.radius) {
+                handleCollision(mol1, mol2);
+              }
+            }
+          }
         }
       }
     }

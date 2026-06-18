@@ -4,6 +4,8 @@ import React, {
   useContext,
   useCallback,
   useEffect,
+  useMemo,
+  useRef,
 } from "react";
 
 interface WallCollisionContextType {
@@ -31,27 +33,55 @@ export const WallCollisionProvider: React.FC<{
   const [elapsedTime, setElapsedTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
 
+  // Collisions arrive in bursts — hundreds per animation frame. Accumulate them
+  // in a ref and flush to React state on a fixed cadence so the counter (and its
+  // consumers) re-render a handful of times per second instead of per collision.
+  const pendingCollisionsRef = useRef(0);
+  // Mirror `isPlaying` in a ref so `incrementCollision` can stay referentially
+  // stable (no deps) and never force the molecule simulation to re-subscribe.
+  const isPlayingRef = useRef(isPlaying);
   useEffect(() => {
-    let intervalId: NodeJS.Timeout;
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
+  useEffect(() => {
+    let elapsedIntervalId: NodeJS.Timeout;
+    let flushIntervalId: NodeJS.Timeout;
 
     if (isPlaying) {
-      intervalId = setInterval(() => {
+      elapsedIntervalId = setInterval(() => {
         setElapsedTime((prev) => prev + samplingInterval / 1000);
       }, samplingInterval);
+
+      flushIntervalId = setInterval(() => {
+        if (pendingCollisionsRef.current > 0) {
+          const pending = pendingCollisionsRef.current;
+          pendingCollisionsRef.current = 0;
+          setCollisionCount((prev) => prev + pending);
+        }
+      }, 200);
     }
 
     return () => {
-      if (intervalId) clearInterval(intervalId);
+      if (elapsedIntervalId) clearInterval(elapsedIntervalId);
+      if (flushIntervalId) clearInterval(flushIntervalId);
+      // Flush any leftover collisions captured before recording stopped.
+      if (pendingCollisionsRef.current > 0) {
+        const pending = pendingCollisionsRef.current;
+        pendingCollisionsRef.current = 0;
+        setCollisionCount((prev) => prev + pending);
+      }
     };
   }, [isPlaying, samplingInterval]);
 
   const incrementCollision = useCallback(() => {
-    if (isPlaying) {
-      setCollisionCount((prev) => prev + 1);
+    if (isPlayingRef.current) {
+      pendingCollisionsRef.current += 1;
     }
-  }, [isPlaying]);
+  }, []);
 
   const startRecording = useCallback(() => {
+    pendingCollisionsRef.current = 0;
     setIsPlaying(true);
   }, []);
 
@@ -60,23 +90,35 @@ export const WallCollisionProvider: React.FC<{
   }, []);
 
   const resetRecording = useCallback(() => {
+    pendingCollisionsRef.current = 0;
     setCollisionCount(0);
     setElapsedTime(0);
     setIsPlaying(false);
   }, []);
 
+  const value = useMemo(
+    () => ({
+      collisionCount,
+      elapsedTime,
+      isPlaying,
+      startRecording,
+      stopRecording,
+      resetRecording,
+      incrementCollision,
+    }),
+    [
+      collisionCount,
+      elapsedTime,
+      isPlaying,
+      startRecording,
+      stopRecording,
+      resetRecording,
+      incrementCollision,
+    ]
+  );
+
   return (
-    <WallCollisionContext.Provider
-      value={{
-        collisionCount,
-        elapsedTime,
-        isPlaying,
-        startRecording,
-        stopRecording,
-        resetRecording,
-        incrementCollision,
-      }}
-    >
+    <WallCollisionContext.Provider value={value}>
       {children}
     </WallCollisionContext.Provider>
   );

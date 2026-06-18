@@ -131,14 +131,7 @@ const SimulationControlSelector: React.FC<SimulationControlSelectorProps> = ({
       calculatedResult.target
     );
 
-    if (controlType === calculatedControlType) {
-      console.log(
-        `Control ${controlType} matches calculated type for ${calculatedResult.target}`
-      );
-      return true;
-    }
-
-    return false;
+    return controlType === calculatedControlType;
   };
 
   return (
