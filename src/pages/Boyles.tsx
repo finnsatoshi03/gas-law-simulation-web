@@ -125,30 +125,32 @@ export default function BoylesLaw() {
 
   return (
     <div className="flex items-center w-full justify-center h-[95%] relative info-sheet-tour-start">
-      <div className="absolute top-4 z-10 left-2">
-        <div className="space-y-2">
+      <div className="absolute inset-y-4 z-10 left-2">
+        <div className="flex h-full flex-col">
           <SimulationControlSelector
             gasLaw="boyles"
             controlState={controlState}
             onControlStateChange={handleControlStateChange}
             calculatedResult={result}
           />
-          <GasLawInputGroup
-            lawType="boyles"
-            values={values}
-            units={units}
-            onValueChange={handleValueChange}
-            onUnitChange={handleUnitChange}
-            disabledFields={[
-              "n",
-              "t",
-              ...(result?.target ? [result.target] : []),
-            ]}
-            className="boyles-law-input-group"
-            onControlStateChange={handleControlStateChange}
-            controlState={controlState}
-          />
-          <CollissionCounter />
+          <div className="mt-auto space-y-2 md:mt-2">
+            <GasLawInputGroup
+              lawType="boyles"
+              values={values}
+              units={units}
+              onValueChange={handleValueChange}
+              onUnitChange={handleUnitChange}
+              disabledFields={[
+                "n",
+                "t",
+                ...(result?.target ? [result.target] : []),
+              ]}
+              className="boyles-law-input-group"
+              onControlStateChange={handleControlStateChange}
+              controlState={controlState}
+            />
+            <CollissionCounter />
+          </div>
         </div>
       </div>
       <div className="absolute top-4 z-10 right-2 flex items-end flex-col gap-2">

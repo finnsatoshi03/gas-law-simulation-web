@@ -32,6 +32,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "../ui/button";
 import CalculationHistoryDrawer from "../CalculationHistory";
 import { useIsMobile } from "@/hooks/use-mobile";
+import ToolHint from "./ToolHint";
 
 const UNITS: UnitTypes = {
   pressure: {
@@ -363,6 +364,7 @@ const GasLawInputGroup: React.FC<GasLawInputGroupProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isHintDismissed, setIsHintDismissed] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isHorizontalLayout, setIsHorizontalLayout] = useState(false);
   const nodeRef = useRef(null);
@@ -370,6 +372,11 @@ const GasLawInputGroup: React.FC<GasLawInputGroupProps> = ({
   const { result, calculateResult, clearResult } = useGasLaw();
 
   const config = GAS_LAW_CONFIGS[lawType];
+
+  useEffect(() => {
+    setPosition({ x: 0, y: 0 });
+    setIsMinimized(isMobile);
+  }, [isMobile]);
 
   // Helper function to map variable ID to control type
   const mapVariableToControlType = (varId: string) => {
@@ -564,6 +571,9 @@ const GasLawInputGroup: React.FC<GasLawInputGroupProps> = ({
     if (!isDragHandle) {
       return false;
     }
+    if (isMobile) {
+      setIsHintDismissed(true);
+    }
   };
 
   const renderConstants = () => {
@@ -731,7 +741,7 @@ const GasLawInputGroup: React.FC<GasLawInputGroupProps> = ({
       <div
         ref={nodeRef}
         className={cn(
-          "space-y-4 p-2 sm:p-4 bg-zinc-100 rounded-lg border border-sidebar-border shadow-md max-w-full mx-auto",
+          "relative space-y-4 p-2 sm:p-4 bg-zinc-100 rounded-lg border border-sidebar-border shadow-md max-w-full mx-auto",
           className
         )}
         style={{
@@ -744,6 +754,18 @@ const GasLawInputGroup: React.FC<GasLawInputGroupProps> = ({
             : "320px",
         }}
       >
+        {isMobile && (
+          <div className="absolute -top-12 left-1/2 -translate-x-1/2">
+            <ToolHint
+              renderAs="html"
+              width={220}
+              height={40}
+              label="Enter values to see the result!"
+              pointer="bottom"
+              visible={isMinimized && !isHintDismissed}
+            />
+          </div>
+        )}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -760,7 +782,12 @@ const GasLawInputGroup: React.FC<GasLawInputGroupProps> = ({
                   <Button
                     variant="link"
                     size="sm"
-                    onClick={() => setIsMinimized(!isMinimized)}
+                    onClick={() => {
+                      setIsMinimized((minimized) => !minimized);
+                      if (isMobile) {
+                        setIsHintDismissed(true);
+                      }
+                    }}
                     className="flex h-fit w-fit p-0 items-center gap-1 sm:gap-2 text-xs sm:text-sm"
                   >
                     {isMinimized ? (

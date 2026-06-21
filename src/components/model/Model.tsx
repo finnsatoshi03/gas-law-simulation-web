@@ -918,7 +918,7 @@ const GasLawsSimulation: React.FC<Props> = ({
           {/* Rendered last in the Cylinder group so it paints on top of the
               cylinder instead of behind it. */}
           <ToolHint
-            x={isMobile ? -75 : -80}
+            x={isMobile ? -25 : -80}
             y={isMobile ? 200 : 712}
             width={130}
             height={40}

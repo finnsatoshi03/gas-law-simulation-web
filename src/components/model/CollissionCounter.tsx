@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CollissionCounterProps {
   className?: string;
@@ -28,6 +29,7 @@ interface CollissionCounterProps {
 export const CollissionCounter: React.FC<CollissionCounterProps> = ({
   className,
 }) => {
+  const isMobile = useIsMobile();
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const { getUiState, setUiState } = useWalkthrough();
   const [isLocalMinimized, setIsLocalMinimized] = useState(true);
@@ -55,6 +57,10 @@ export const CollissionCounter: React.FC<CollissionCounterProps> = ({
     }
   }, [getUiState]);
 
+  useEffect(() => {
+    setPosition({ x: 0, y: 0 });
+  }, [isMobile]);
+
   const toggleMinimize = () => {
     const newMinimizedState = !isLocalMinimized;
     setIsLocalMinimized(newMinimizedState);
@@ -78,7 +84,7 @@ export const CollissionCounter: React.FC<CollissionCounterProps> = ({
       <div
         ref={nodeRef}
         className={cn(
-          "absolute space-y-4 p-2 sm:p-4 bg-zinc-100 rounded-lg border border-sidebar-border shadow-md w-[250px] md:w-[320px] max-w-full collision-counter",
+          "relative md:absolute space-y-4 p-2 sm:p-4 bg-zinc-100 rounded-lg border border-sidebar-border shadow-md w-[250px] md:w-[320px] max-w-full collision-counter",
           className
         )}
       >
