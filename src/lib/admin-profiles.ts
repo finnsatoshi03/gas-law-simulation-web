@@ -118,6 +118,10 @@ const getSafeAdminError = (error: unknown, fallback: string) => {
     return "The selected user is already deleted.";
   }
 
+  if (message.includes("profile is not deleted")) {
+    return "The selected user is not deleted.";
+  }
+
   if (message.includes("deleted profiles cannot be changed")) {
     return "Deleted users cannot be changed.";
   }
@@ -277,6 +281,21 @@ export const updateAdminProfileRole = async (
 
   if (error) {
     throw new Error(getSafeAdminError(error, "Could not update the user role."));
+  }
+
+  return mapRpcProfile(data);
+};
+
+export const restoreAdminProfile = async (profileId: string) => {
+  const { data, error } = await getSupabaseClient().rpc(
+    "admin_restore_profile",
+    {
+      target_profile_id: profileId,
+    }
+  );
+
+  if (error) {
+    throw new Error(getSafeAdminError(error, "Could not restore the user."));
   }
 
   return mapRpcProfile(data);

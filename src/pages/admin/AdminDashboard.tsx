@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Activity,
+  ArchiveRestore,
   ArrowUpDown,
   Ban,
   ChevronLeft,
@@ -40,6 +41,7 @@ import {
   ProfileDeletionFilter,
   ProfileSort,
   recordProtectedActionBlocked,
+  restoreAdminProfile,
   STATUS_ACTIONS,
   SortDirection,
   updateAdminProfileRole,
@@ -57,6 +59,7 @@ import {
   AppRole,
   canDeleteUser,
   canManageUser,
+  canRestoreUser,
   ROLE_LABELS,
 } from "@/lib/permissions";
 import { useAccessControl } from "@/contexts/AccessControlContext";
@@ -141,6 +144,11 @@ type PendingAction =
     }
   | {
       kind: "delete";
+      label: string;
+      profile: AdminProfile;
+    }
+  | {
+      kind: "restore";
       label: string;
       profile: AdminProfile;
     };
@@ -269,6 +277,10 @@ const getPendingActionPresentation = (
 ): ActionPresentation => {
   if (action.kind === "delete") {
     return { icon: Trash2, ...ACTION_PRESENTATION.danger };
+  }
+
+  if (action.kind === "restore") {
+    return { icon: ArchiveRestore, ...ACTION_PRESENTATION.success };
   }
 
   return action.kind === "status"
@@ -476,15 +488,17 @@ export default function AdminDashboard() {
       const updatedProfile =
         pendingAction.kind === "delete"
           ? await deleteAdminProfile(pendingAction.profile.id)
-          : pendingAction.kind === "status"
-            ? await updateAdminProfileStatus(
-                pendingAction.profile.id,
-                pendingAction.nextStatus,
-              )
-            : await updateAdminProfileRole(
-                pendingAction.profile.id,
-                pendingAction.nextRole,
-              );
+          : pendingAction.kind === "restore"
+            ? await restoreAdminProfile(pendingAction.profile.id)
+            : pendingAction.kind === "status"
+              ? await updateAdminProfileStatus(
+                  pendingAction.profile.id,
+                  pendingAction.nextStatus,
+                )
+              : await updateAdminProfileRole(
+                  pendingAction.profile.id,
+                  pendingAction.nextRole,
+                );
 
       if (updatedProfile.id === currentProfile?.id) {
         await refreshProfile();
@@ -645,6 +659,12 @@ export default function AdminDashboard() {
           pendingAction.profile.email ??
           "this user"
         }? This will remove their application access and hide them from the current user list. Their Auth account and activity history will be retained.`
+      : pendingAction.kind === "restore"
+      ? `Restore ${
+          pendingAction.profile.fullName ??
+          pendingAction.profile.email ??
+          "this user"
+        }? Their application access will be reinstated with the same role and the account status they had before deletion.`
       : pendingAction.kind === "role" &&
       pendingAction.profile.id === currentProfile?.id &&
       pendingAction.nextRole === APP_ROLE.USER
@@ -1007,6 +1027,25 @@ export default function AdminDashboard() {
                                       </DropdownMenuItem>
                                     </>
                                   )
+                                ) : canRestoreUser(currentProfile, profile) ? (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      className={
+                                        ACTION_PRESENTATION.success.itemClassName
+                                      }
+                                      onClick={() =>
+                                        setPendingAction({
+                                          kind: "restore",
+                                          label: "Restore user",
+                                          profile,
+                                        })
+                                      }
+                                    >
+                                      <ArchiveRestore className="size-4" />
+                                      Restore user
+                                    </DropdownMenuItem>
+                                  </>
                                 ) : null}
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -1409,6 +1448,25 @@ export default function AdminDashboard() {
                       Delete user
                     </Button>
                   ) : null}
+                </div>
+              ) : null}
+
+              {canRestoreUser(currentProfile, selectedProfile) ? (
+                <div className="flex justify-end gap-2 border-t pt-4">
+                  <Button
+                    disabled={isMutating}
+                    onClick={() =>
+                      setPendingAction({
+                        kind: "restore",
+                        label: "Restore user",
+                        profile: selectedProfile,
+                      })
+                    }
+                    size="sm"
+                  >
+                    <ArchiveRestore className="size-4" />
+                    Restore user
+                  </Button>
                 </div>
               ) : null}
             </div>

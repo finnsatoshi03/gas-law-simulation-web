@@ -125,6 +125,30 @@ export const canManageUser = (
   return false;
 };
 
+/**
+ * Whether `actor` may restore the soft-deleted `target`. Mirrors management
+ * rules but requires the target to actually be deleted: Main Admin may restore
+ * anyone; Sub Admin only standard users.
+ */
+export const canRestoreUser = (
+  actor: PermissionProfile | null,
+  target: RoleTarget | null
+): boolean => {
+  if (!isActor(actor) || !target || !target.deletedAt) {
+    return false;
+  }
+
+  if (isMainAdmin(actor)) {
+    return true;
+  }
+
+  if (isSubAdmin(actor)) {
+    return target.role === APP_ROLE.USER;
+  }
+
+  return false;
+};
+
 /** Only a Main Admin may assign roles, and only the three supported roles. */
 export const canAssignRole = (
   actor: PermissionProfile | null,
