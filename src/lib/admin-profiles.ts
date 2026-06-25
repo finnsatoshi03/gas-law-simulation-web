@@ -1,5 +1,5 @@
 import { ACCOUNT_STATUS, AccountStatus, isAccountStatus } from "./account-status";
-import { APP_ROLE, AppRole, isAppRole } from "./permissions";
+import { APP_ROLE, AppRole, isAppRole, isMainAdmin, ROLE_LABELS } from "./permissions";
 import { getSupabaseClient } from "./supabase";
 
 export interface AdminProfile {
@@ -122,6 +122,22 @@ const getSafeAdminError = (error: unknown, fallback: string) => {
     return "Deleted users cannot be changed.";
   }
 
+  if (message.includes("sub administrators can only manage standard users")) {
+    return "Sub Admins can only manage standard users.";
+  }
+
+  if (message.includes("sub administrators cannot modify administrator accounts")) {
+    return "Sub Admins cannot modify administrator accounts.";
+  }
+
+  if (message.includes("sub administrators cannot change account roles")) {
+    return "Sub Admins cannot change account roles.";
+  }
+
+  if (message.includes("unsupported account role")) {
+    return "That account role is not supported.";
+  }
+
   if (
     message.includes("permission denied") ||
     message.includes("row-level security")
@@ -130,6 +146,22 @@ const getSafeAdminError = (error: unknown, fallback: string) => {
   }
 
   return fallback;
+};
+
+/**
+ * Returns true when an error message reflects a protection rule blocking a
+ * sub-admin (used to decide whether to record a `protected_action_blocked` log).
+ */
+export const isProtectedActionError = (error: unknown): boolean => {
+  const message =
+    error instanceof Error ? error.message.toLowerCase() : String(error ?? "").toLowerCase();
+
+  return (
+    message.includes("sub administrators") ||
+    message.includes("sub admins") ||
+    message.includes("administrator access is required") ||
+    message.includes("at least one active administrator")
+  );
 };
 
 const sanitizeSearch = (value: string) =>
@@ -284,16 +316,49 @@ export const STATUS_ACTIONS: Record<
   ],
 };
 
-export const ROLE_ACTIONS: Record<
-  AppRole,
-  { label: string; nextRole: AppRole }
-> = {
-  [APP_ROLE.ADMIN]: {
-    label: "Change role to user",
-    nextRole: APP_ROLE.USER,
-  },
-  [APP_ROLE.USER]: {
-    label: "Change role to admin",
-    nextRole: APP_ROLE.ADMIN,
-  },
+export interface RoleAssignmentOption {
+  label: string;
+  nextRole: AppRole;
+}
+
+/**
+ * The role changes `actor` may apply to `target`. Only a Main Admin can assign
+ * roles; the returned options exclude the target's current role. Sub Admins (and
+ * standard users) get no options, so role controls are hidden for them.
+ */
+export const getAvailableRoleAssignments = (
+  actor: { deletedAt?: string | null; role: AppRole; status: AccountStatus } | null,
+  target: Pick<AdminProfile, "role">
+): RoleAssignmentOption[] => {
+  if (!isMainAdmin(actor)) {
+    return [];
+  }
+
+  return (Object.values(APP_ROLE) as AppRole[])
+    .filter((role) => role !== target.role)
+    .map((role) => ({
+      label: `Change role to ${ROLE_LABELS[role]}`,
+      nextRole: role,
+    }));
+};
+
+/**
+ * Best-effort logging of a protected action that the backend rejected. Records a
+ * `protected_action_blocked` activity-log entry. Never throws — logging must not
+ * disrupt the admin experience.
+ */
+export const recordProtectedActionBlocked = async (params: {
+  actionAttempted: string;
+  reason?: string | null;
+  targetProfileId?: string | null;
+}): Promise<void> => {
+  try {
+    await getSupabaseClient().rpc("record_protected_action_blocked", {
+      action_attempted: params.actionAttempted,
+      reason: params.reason ?? null,
+      target_profile_id: params.targetProfileId ?? null,
+    });
+  } catch {
+    // Swallow: the action is already denied; failing to log is non-critical.
+  }
 };

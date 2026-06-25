@@ -33,11 +33,13 @@ import {
   AdminProfile,
   deleteAdminProfile,
   getAdminProfileCounts,
+  getAvailableRoleAssignments,
+  isProtectedActionError,
   listAdminProfiles,
   ProfileCounts,
   ProfileDeletionFilter,
   ProfileSort,
-  ROLE_ACTIONS,
+  recordProtectedActionBlocked,
   STATUS_ACTIONS,
   SortDirection,
   updateAdminProfileRole,
@@ -50,7 +52,13 @@ import {
   FeatureDefinition,
   FeatureKey,
 } from "@/lib/features";
-import { APP_ROLE, AppRole } from "@/lib/permissions";
+import {
+  APP_ROLE,
+  AppRole,
+  canDeleteUser,
+  canManageUser,
+  ROLE_LABELS,
+} from "@/lib/permissions";
 import { useAccessControl } from "@/contexts/AccessControlContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useToast } from "@/contexts/ToastContext";
@@ -204,16 +212,20 @@ const StatusBadge = ({ status }: { status: AccountStatus }) => (
   </span>
 );
 
+const ROLE_BADGE_CLASSES: Record<AppRole, string> = {
+  [APP_ROLE.ADMIN]: "bg-violet-100 text-violet-700",
+  [APP_ROLE.SUB_ADMIN]: "bg-amber-100 text-amber-700",
+  [APP_ROLE.USER]: "bg-sky-100 text-sky-700",
+};
+
 const RoleBadge = ({ role }: { role: AppRole }) => (
   <span
     className={cn(
-      "inline-flex rounded-full px-2 py-1 text-xs font-semibold capitalize",
-      role === APP_ROLE.ADMIN
-        ? "bg-violet-100 text-violet-700"
-        : "bg-sky-100 text-sky-700",
+      "inline-flex rounded-full px-2 py-1 text-xs font-semibold",
+      ROLE_BADGE_CLASSES[role],
     )}
   >
-    {role}
+    {ROLE_LABELS[role]}
   </span>
 );
 
@@ -243,6 +255,10 @@ const getStatusActionPresentation = (
 const getRoleActionPresentation = (nextRole: AppRole): ActionPresentation => {
   if (nextRole === APP_ROLE.ADMIN) {
     return { icon: ShieldPlus, ...ACTION_PRESENTATION.admin };
+  }
+
+  if (nextRole === APP_ROLE.SUB_ADMIN) {
+    return { icon: ShieldCheck, ...ACTION_PRESENTATION.admin };
   }
 
   return { icon: ShieldMinus, ...ACTION_PRESENTATION.danger };
@@ -489,11 +505,29 @@ export default function AdminDashboard() {
       setPendingAction(null);
       await loadDashboard();
     } catch (mutationError) {
+      const description =
+        mutationError instanceof Error
+          ? mutationError.message
+          : "Could not update the selected user.";
+
+      // Record blocked protected actions out-of-band (best-effort).
+      if (isProtectedActionError(mutationError)) {
+        const actionAttempted =
+          pendingAction.kind === "role"
+            ? `role:${pendingAction.nextRole}`
+            : pendingAction.kind === "status"
+              ? `status:${pendingAction.nextStatus}`
+              : "delete";
+
+        void recordProtectedActionBlocked({
+          actionAttempted,
+          reason: description,
+          targetProfileId: pendingAction.profile.id,
+        });
+      }
+
       showToast({
-        description:
-          mutationError instanceof Error
-            ? mutationError.message
-            : "Could not update the selected user.",
+        description,
         title: "Admin action failed",
         variant: "error",
       });
@@ -712,8 +746,15 @@ export default function AdminDashboard() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All roles</SelectItem>
-                <SelectItem value={APP_ROLE.ADMIN}>Admin</SelectItem>
-                <SelectItem value={APP_ROLE.USER}>User</SelectItem>
+                <SelectItem value={APP_ROLE.ADMIN}>
+                  {ROLE_LABELS[APP_ROLE.ADMIN]}
+                </SelectItem>
+                <SelectItem value={APP_ROLE.SUB_ADMIN}>
+                  {ROLE_LABELS[APP_ROLE.SUB_ADMIN]}
+                </SelectItem>
+                <SelectItem value={APP_ROLE.USER}>
+                  {ROLE_LABELS[APP_ROLE.USER]}
+                </SelectItem>
               </SelectContent>
             </Select>
             <Select
@@ -817,11 +858,16 @@ export default function AdminDashboard() {
                 ) : (
                   profiles.map((profile) => {
                     const isCurrentUser = profile.id === currentProfile?.id;
-                    const roleAction = ROLE_ACTIONS[profile.role];
-                    const rolePresentation = getRoleActionPresentation(
-                      roleAction.nextRole,
+                    const canManage = canManageUser(currentProfile, profile);
+                    const canDelete = canDeleteUser(
+                      currentProfile,
+                      profile,
+                      currentProfile?.id,
                     );
-                    const RoleActionIcon = rolePresentation.icon;
+                    const roleOptions = getAvailableRoleAssignments(
+                      currentProfile,
+                      profile,
+                    );
 
                     return (
                       <TableRow key={profile.id}>
@@ -868,69 +914,99 @@ export default function AdminDashboard() {
                                   View details
                                 </DropdownMenuItem>
                                 {!profile.deletedAt ? (
-                                  <>
-                                    <DropdownMenuSeparator />
-                                    {STATUS_ACTIONS[profile.status].map(
-                                      (action) => {
-                                        const presentation =
-                                          getStatusActionPresentation(
-                                            profile.status,
-                                            action.nextStatus,
+                                  canManage ? (
+                                    <>
+                                      <DropdownMenuSeparator />
+                                      {STATUS_ACTIONS[profile.status].map(
+                                        (action) => {
+                                          const presentation =
+                                            getStatusActionPresentation(
+                                              profile.status,
+                                              action.nextStatus,
+                                            );
+                                          const ActionIcon = presentation.icon;
+
+                                          return (
+                                            <DropdownMenuItem
+                                              className={
+                                                presentation.itemClassName
+                                              }
+                                              key={action.nextStatus}
+                                              onClick={() =>
+                                                setPendingAction({
+                                                  kind: "status",
+                                                  label: action.label,
+                                                  nextStatus: action.nextStatus,
+                                                  profile,
+                                                })
+                                              }
+                                            >
+                                              <ActionIcon className="size-4" />
+                                              {action.label}
+                                            </DropdownMenuItem>
                                           );
-                                        const ActionIcon = presentation.icon;
+                                        },
+                                      )}
+                                      {roleOptions.map((option) => {
+                                        const presentation =
+                                          getRoleActionPresentation(
+                                            option.nextRole,
+                                          );
+                                        const RoleActionIcon =
+                                          presentation.icon;
 
                                         return (
                                           <DropdownMenuItem
-                                            className={
-                                              presentation.itemClassName
-                                            }
-                                            key={action.nextStatus}
+                                            className={presentation.itemClassName}
+                                            key={option.nextRole}
                                             onClick={() =>
                                               setPendingAction({
-                                                kind: "status",
-                                                label: action.label,
-                                                nextStatus: action.nextStatus,
+                                                kind: "role",
+                                                label: option.label,
+                                                nextRole: option.nextRole,
                                                 profile,
                                               })
                                             }
                                           >
-                                            <ActionIcon className="size-4" />
-                                            {action.label}
+                                            <RoleActionIcon className="size-4" />
+                                            {option.label}
                                           </DropdownMenuItem>
                                         );
-                                      },
-                                    )}
-                                    <DropdownMenuItem
-                                      className={rolePresentation.itemClassName}
-                                      onClick={() =>
-                                        setPendingAction({
-                                          kind: "role",
-                                          label: roleAction.label,
-                                          nextRole: roleAction.nextRole,
-                                          profile,
-                                        })
-                                      }
-                                    >
-                                      <RoleActionIcon className="size-4" />
-                                      {roleAction.label}
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                      className={
-                                        ACTION_PRESENTATION.danger.itemClassName
-                                      }
-                                      onClick={() =>
-                                        setPendingAction({
-                                          kind: "delete",
-                                          label: "Delete user",
-                                          profile,
-                                        })
-                                      }
-                                    >
-                                      <Trash2 className="size-4" />
-                                      Delete user
-                                    </DropdownMenuItem>
-                                  </>
+                                      })}
+                                      {canDelete ? (
+                                        <>
+                                          <DropdownMenuSeparator />
+                                          <DropdownMenuItem
+                                            className={
+                                              ACTION_PRESENTATION.danger
+                                                .itemClassName
+                                            }
+                                            onClick={() =>
+                                              setPendingAction({
+                                                kind: "delete",
+                                                label: "Delete user",
+                                                profile,
+                                              })
+                                            }
+                                          >
+                                            <Trash2 className="size-4" />
+                                            Delete user
+                                          </DropdownMenuItem>
+                                        </>
+                                      ) : null}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem
+                                        className="text-zinc-400 focus:text-zinc-400"
+                                        disabled
+                                      >
+                                        <Lock className="size-4" />
+                                        Only a Main Admin can manage this account
+                                      </DropdownMenuItem>
+                                    </>
+                                  )
                                 ) : null}
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -1280,7 +1356,7 @@ export default function AdminDashboard() {
               </dl>
 
               {selectedProfile.id !== currentProfile?.id &&
-              !selectedProfile.deletedAt ? (
+              canManageUser(currentProfile, selectedProfile) ? (
                 <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
                   {STATUS_ACTIONS[selectedProfile.status].map((action) => {
                     const presentation = getStatusActionPresentation(
@@ -1312,21 +1388,27 @@ export default function AdminDashboard() {
                       </Button>
                     );
                   })}
-                  <Button
-                    disabled={isMutating}
-                    onClick={() =>
-                      setPendingAction({
-                        kind: "delete",
-                        label: "Delete user",
-                        profile: selectedProfile,
-                      })
-                    }
-                    size="sm"
-                    variant="destructive"
-                  >
-                    <Trash2 className="size-4" />
-                    Delete user
-                  </Button>
+                  {canDeleteUser(
+                    currentProfile,
+                    selectedProfile,
+                    currentProfile?.id,
+                  ) ? (
+                    <Button
+                      disabled={isMutating}
+                      onClick={() =>
+                        setPendingAction({
+                          kind: "delete",
+                          label: "Delete user",
+                          profile: selectedProfile,
+                        })
+                      }
+                      size="sm"
+                      variant="destructive"
+                    >
+                      <Trash2 className="size-4" />
+                      Delete user
+                    </Button>
+                  ) : null}
                 </div>
               ) : null}
             </div>

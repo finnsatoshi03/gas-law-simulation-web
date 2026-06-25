@@ -22,7 +22,7 @@ import { FEATURE_REGISTRY, FeatureKey } from "@/lib/features";
 import { getSupabaseClient } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
-import { isAdmin } from "@/lib/permissions";
+import { isAdminLevel } from "@/lib/permissions";
 
 interface AccessControlContextType {
   appSettings: AppAccessSettings;
@@ -167,7 +167,8 @@ export const AccessControlProvider = ({ children }: { children: ReactNode }) => 
   );
 
   const value = useMemo<AccessControlContextType>(() => {
-    const currentUserIsAdmin = isAdmin(profile);
+    // Both admin tiers (Main Admin + Sub Admin) bypass feature/app locks.
+    const currentUserIsAdmin = isAdminLevel(profile);
 
     const isFeatureLocked = (featureKey: FeatureKey) =>
       Boolean(featureSettings.get(featureKey)?.isLocked);
